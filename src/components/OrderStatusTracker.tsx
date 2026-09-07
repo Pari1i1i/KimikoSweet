@@ -1,0 +1,211 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { dataService } from "@/lib/dataService";
+import { Order } from "@/types";
+import { MascotChoux } from "./MascotChoux";
+import { 
+  Search, 
+  Clock, 
+  CheckCircle, 
+  Sparkles, 
+  PackageCheck, 
+  QrCode, 
+  Banknote,
+  RefreshCw
+} from "lucide-react";
+
+export const OrderStatusTracker: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = dataService.subscribeOrders((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const formatRupiah = (val: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(val);
+  };
+
+  const filteredOrders = orders.filter((ord) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    return (
+      ord.id.toLowerCase().includes(query) ||
+      ord.namaPembeli.toLowerCase().includes(query) ||
+      ord.kelas.toLowerCase().includes(query)
+    );
+  });
+
+  const getStatusBadge = (status: Order["status"]) => {
+    switch (status) {
+      case "pending":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-butter border-2 border-brand-dark text-xs font-extrabold text-brand-dark shadow-neo-sm">
+            <Clock className="w-3.5 h-3.5 animate-spin" />
+            Menunggu Konfirmasi
+          </span>
+        );
+      case "confirmed":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-pink border-2 border-brand-dark text-xs font-extrabold text-brand-dark shadow-neo-sm">
+            <Sparkles className="w-3.5 h-3.5 text-brand-accent animate-bounce" />
+            Sedang Dibuat (Confirmed)
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-300 border-2 border-brand-dark text-xs font-extrabold text-brand-dark shadow-neo-sm">
+            <CheckCircle className="w-3.5 h-3.5 text-green-800" />
+            Selesai / Siap Diambil
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Banner Info */}
+      <div className="p-5 rounded-neo-lg bg-brand-cream border-neo-thick border-brand-dark shadow-neo flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-center sm:text-left">
+          <div className="w-12 h-12 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center shrink-0">
+            <MascotChoux pose="thinking" size={40} />
+          </div>
+          <div>
+            <h3 className="font-heading text-lg sm:text-xl font-bold text-brand-dark">
+              Cek Status Pesanan Realtime 🔴
+            </h3>
+            <p className="text-xs text-brand-dark/80 font-medium">
+              Data terhubung langsung ke dapur KiMiko Sweets tanpa perlu refresh halaman!
+            </p>
+          </div>
+        </div>
+
+        {/* Live indicator */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-dark rounded-full shadow-neo-sm text-xs font-bold">
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping"></span>
+          <span>Live Realtime</span>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Cari berdasarkan Nama Pembeli / Kelas / ID Pesanan (misal: KMK-123456)..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-3 pl-11 rounded-neo-sm neo-input bg-white text-sm font-semibold text-brand-dark"
+        />
+        <Search className="w-5 h-5 text-brand-dark/60 absolute left-3.5 top-3.5" />
+      </div>
+
+      {/* Order Cards List */}
+      {loading ? (
+        <div className="p-8 text-center bg-white rounded-neo border-2 border-brand-dark">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-brand-accent mb-2" />
+          <p className="text-xs font-bold text-brand-dark">Memuat data pesanan...</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="p-8 text-center bg-white rounded-neo border-2 border-brand-dark shadow-neo">
+          <MascotChoux pose="empty" size={100} className="mx-auto" />
+          <h4 className="font-heading text-base font-bold text-brand-dark mt-2">
+            Belum Ada Pesanan Ditemukan
+          </h4>
+          <p className="text-xs text-brand-dark/70 max-w-sm mx-auto mt-1 font-medium">
+            {searchQuery
+              ? `Tidak ada pesanan yang cocok dengan pencarian "${searchQuery}". Pastikan penulisan nama atau ID pesanan benar.`
+              : "Belum ada pesanan aktif saat ini. Yuk pesan kue sus favoritmu sekarang!"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredOrders.map((ord) => (
+            <div
+              key={ord.id}
+              className="neo-card p-4 sm:p-5 flex flex-col justify-between gap-3 bg-white"
+            >
+              {/* Header Card */}
+              <div className="flex items-start justify-between gap-2 border-b-2 border-brand-dark/10 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-heading font-extrabold text-base text-brand-dark">
+                      {ord.namaPembeli}
+                    </h4>
+                    <span className="neo-badge text-[11px] px-2 py-0.5 rounded-md bg-brand-cream text-brand-dark">
+                      {ord.kelas}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-brand-accent font-mono mt-0.5">
+                    ID: {ord.id}
+                  </p>
+                </div>
+                <div className="shrink-0">{getStatusBadge(ord.status)}</div>
+              </div>
+
+              {/* Items Ordered List */}
+              <div className="space-y-1.5 py-1">
+                <p className="text-[11px] font-bold text-brand-dark/60 uppercase tracking-wider">
+                  Menu Dipesan:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ord.items.map((it, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-neo-sm bg-brand-pink/40 border border-brand-dark text-xs font-bold text-brand-dark flex items-center gap-1"
+                    >
+                      <span>{it.namaVarian}</span>
+                      <span className="bg-brand-dark text-white text-[10px] px-1.5 rounded-full">
+                        x{it.qty}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {ord.notes && (
+                <div className="text-xs bg-brand-bg p-2 rounded-neo-sm border border-brand-dark/30 font-medium italic text-brand-dark/80">
+                  &ldquo;{ord.notes}&rdquo;
+                </div>
+              )}
+
+              {/* Footer Details */}
+              <div className="border-t-2 border-brand-dark/10 pt-3 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-brand-dark/80">
+                  {ord.metodeBayar === "qris" ? (
+                    <>
+                      <QrCode className="w-3.5 h-3.5 text-brand-accent" />
+                      <span>QRIS Offline</span>
+                    </>
+                  ) : (
+                    <>
+                      <Banknote className="w-3.5 h-3.5 text-green-600" />
+                      <span>Cash Tunai</span>
+                    </>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-brand-dark/60 uppercase font-bold block">
+                    Total Bayar
+                  </span>
+                  <span className="font-heading font-extrabold text-sm text-brand-accent">
+                    {formatRupiah(ord.totalHarga)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
