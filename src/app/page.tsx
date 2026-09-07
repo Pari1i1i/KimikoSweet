@@ -204,7 +204,7 @@ function HomePageContent() {
       )}
 
       {/* Cart & Checkout Modal */}
-      <CartCheckoutModal />
+      <CartCheckoutModal onOrderSuccessNav={() => setActiveTab("status")} />
 
       {/* Footer with Mandatory Copyright Pari1i1i */}
       <Footer />

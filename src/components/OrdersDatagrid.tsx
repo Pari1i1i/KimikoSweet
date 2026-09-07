@@ -206,14 +206,21 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
 
                     {/* Customer */}
                     <td className="p-3 border-r-2 border-brand-dark/10">
-                      <span className="font-heading font-bold text-brand-dark block text-sm">
-                        {ord.namaPembeli}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-heading font-bold text-brand-dark block text-sm">
+                          {ord.namaPembeli}
+                        </span>
+                        {ord.isAnonim && (
+                          <span className="neo-badge text-[9px] bg-brand-dark text-white px-1.5 py-0.2 rounded font-extrabold">
+                            Anonim
+                          </span>
+                        )}
+                      </div>
                       <span className="inline-block mt-0.5 px-2 py-0.2 rounded-md bg-brand-pink/50 text-[10px] font-bold border border-brand-dark/30">
                         {ord.kelas}
                       </span>
                       {ord.notes && (
-                        <p className="text-[10px] text-brand-dark/70 italic mt-1 bg-brand-bg p-1 rounded border border-brand-dark/20">
+                        <p className="text-[10px] text-brand-dark/80 font-medium italic mt-1 bg-brand-bg p-1.5 rounded border border-brand-dark/20">
                           Catatan: {ord.notes}
                         </p>
                       )}

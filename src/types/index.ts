@@ -29,6 +29,7 @@ export interface Order {
   totalPcs: number;
   metodeBayar: PaymentMethod;
   notes?: string;
+  isAnonim?: boolean;
   status: OrderStatus;
   createdAt: number; // timestamp ms
 }

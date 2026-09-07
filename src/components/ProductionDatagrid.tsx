@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Order } from "@/types";
 import { PastryIllustration } from "./PastryIllustration";
 import { PRODUCTS_DATA } from "@/data/products";
+import { dataService } from "@/lib/dataService";
 import { 
   Check, 
   RotateCcw, 
@@ -40,6 +41,13 @@ export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }
     } catch (e) {
       console.error(e);
     }
+
+    // Dengarkan event reset produksi (misalnya saat admin mulai sesi baru)
+    const unsub = dataService.subscribeProductionReset(() => {
+      setCompletedPcsMap({});
+    });
+
+    return () => unsub();
   }, []);
 
   const savePcsMap = (updated: Record<string, number>) => {

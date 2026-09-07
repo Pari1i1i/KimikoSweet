@@ -168,11 +168,18 @@ export const OrderStatusTracker: React.FC = () => {
                 </div>
               </div>
 
-              {ord.notes && (
+              {ord.isAnonim ? (
+                <div className="text-xs bg-brand-bg/60 p-2 rounded-neo-sm border border-brand-dark/20 font-medium text-brand-dark/60 flex items-center gap-1.5">
+                  <span className="font-bold text-[10px] uppercase bg-brand-cream px-1.5 py-0.5 rounded border border-brand-dark/30">
+                    Catatan:
+                  </span>
+                  <span>-</span>
+                </div>
+              ) : ord.notes ? (
                 <div className="text-xs bg-brand-bg p-2 rounded-neo-sm border border-brand-dark/30 font-medium italic text-brand-dark/80">
                   &ldquo;{ord.notes}&rdquo;
                 </div>
-              )}
+              ) : null}
 
               {/* Footer Details */}
               <div className="border-t-2 border-brand-dark/10 pt-3 flex items-center justify-between text-xs">

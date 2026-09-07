@@ -23,7 +23,11 @@ import {
   Calendar
 } from "lucide-react";
 
-export const CartCheckoutModal: React.FC = () => {
+interface CartCheckoutModalProps {
+  onOrderSuccessNav?: () => void;
+}
+
+export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuccessNav }) => {
   const {
     items,
     updateQty,
@@ -40,6 +44,7 @@ export const CartCheckoutModal: React.FC = () => {
   const [kelas, setKelas] = useState("");
   const [hariPengambilan, setHariPengambilan] = useState<HariPengambilan>("Senin");
   const [notes, setNotes] = useState("");
+  const [isAnonim, setIsAnonim] = useState(false);
   const [metodeBayar, setMetodeBayar] = useState<PaymentMethod>("qris");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastOrderId, setLastOrderId] = useState("");
@@ -63,6 +68,7 @@ export const CartCheckoutModal: React.FC = () => {
       setKelas("");
       setHariPengambilan("Senin");
       setNotes("");
+      setIsAnonim(false);
     }
   };
 
@@ -96,6 +102,7 @@ export const CartCheckoutModal: React.FC = () => {
         totalPcs: totalItems,
         metodeBayar,
         notes: notes.trim() || undefined,
+        isAnonim,
         status: "pending",
         createdAt: Date.now(),
       });
@@ -341,6 +348,23 @@ export const CartCheckoutModal: React.FC = () => {
                 />
               </div>
 
+              {/* Checkbox: Pesan sebagai Anonim */}
+              <div className="p-3 rounded-neo-sm border-2 border-brand-dark bg-white shadow-neo-sm flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="anonimCheckbox"
+                  checked={isAnonim}
+                  onChange={(e) => setIsAnonim(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-2 border-brand-dark text-brand-accent focus:ring-0 cursor-pointer accent-brand-accent"
+                />
+                <label htmlFor="anonimCheckbox" className="text-xs text-brand-dark cursor-pointer select-none">
+                  <span className="font-bold block">Pesan sebagai Anonim</span>
+                  <span className="text-[11px] text-brand-dark/70 font-medium">
+                    Jika dicentang, nama kamu tetap tampil di cek pesanan namun catatan khusus kamu disamarkan (&lsquo;-&rsquo;) untuk publik dan hanya bisa dibaca oleh admin.
+                  </span>
+                </label>
+              </div>
+
               {/* Pilihan Metode Bayar */}
               <div>
                 <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1.5">
@@ -471,6 +495,18 @@ export const CartCheckoutModal: React.FC = () => {
               </div>
 
               <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+                {onOrderSuccessNav && (
+                  <button
+                    onClick={() => {
+                      handleClose();
+                      onOrderSuccessNav();
+                    }}
+                    className="px-5 py-2.5 rounded-neo-sm bg-brand-accent text-white font-heading font-bold text-xs sm:text-sm neo-btn flex items-center justify-center gap-1.5"
+                  >
+                    <span>Lihat Status Pesanan</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   onClick={handleClose}
                   className="px-5 py-2.5 rounded-neo-sm bg-brand-butter border-2 border-brand-dark font-heading font-bold text-xs sm:text-sm neo-btn text-brand-dark"

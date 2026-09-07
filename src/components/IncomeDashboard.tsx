@@ -63,6 +63,9 @@ export const IncomeDashboard: React.FC<IncomeDashboardProps> = ({ orders }) => {
 
   const handleStartSession = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!confirm("Perhatian: Membuka sesi baru akan mereset daftar pesanan pembeli dan progres produksi ke 0 untuk memulai rekapan baru. Lanjutkan?")) {
+      return;
+    }
     const parsed = parseInt(inputSaldoAwal.replace(/\D/g, ""), 10) || 0;
     await dataService.startNewSession(parsed, namaSesi.trim() || "Sesi Penjualan Baru");
     setIsModalOpen(false);
@@ -213,7 +216,7 @@ export const IncomeDashboard: React.FC<IncomeDashboardProps> = ({ orders }) => {
                   className="w-full px-3 py-2 rounded-neo-sm neo-input text-sm font-bold text-brand-dark bg-white"
                 />
                 <p className="text-[11px] text-brand-dark/70 font-medium mt-1">
-                  Setelah sesi dibuka, pendapatan dari setiap pesanan yang terkonfirmasi akan otomatis ditambahkan ke saldo ini!
+                  Setelah sesi dibuka, pendapatan dari setiap pesanan yang terkonfirmasi akan otomatis dihitung ke saldo ini, dan data pesanan serta progres produksi akan direset baru.
                 </p>
               </div>
 
