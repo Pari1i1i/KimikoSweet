@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { dataService } from "@/lib/dataService";
 import { Review } from "@/types";
 import { MascotChoux } from "./MascotChoux";
-import { Star, Send, Sparkles, Heart } from "lucide-react";
+import { Star, Send, Heart } from "lucide-react";
 
 export const ReviewsWall: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -54,23 +54,17 @@ export const ReviewsWall: React.FC = () => {
     <div className="space-y-6">
       {/* Header Form Card */}
       <div className="neo-card-lg p-5 sm:p-6 bg-brand-pink border-neo-thick border-brand-dark shadow-neo">
-        <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
-          <div className="flex items-center gap-3 text-center md:text-left">
-            <div className="w-14 h-14 rounded-neo bg-brand-butter border-2 border-brand-dark flex items-center justify-center shrink-0 shadow-neo-sm">
-              <MascotChoux pose="happy" size={46} />
-            </div>
-            <div>
-              <h3 className="font-heading text-xl sm:text-2xl font-bold text-brand-dark">
-                Dinding Ulasan Sobat Manis ✨
-              </h3>
-              <p className="text-xs sm:text-sm text-brand-dark/80 font-medium">
-                Kirim pesan manis, ulasan rasa favorit, atau saran untuk KiMiko Sweets!
-              </p>
-            </div>
+        <div className="flex items-center gap-3 text-left">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-neo bg-brand-butter border-2 border-brand-dark flex items-center justify-center shrink-0 shadow-neo-sm">
+            <MascotChoux pose="happy" size={44} />
           </div>
-          <div className="flex items-center gap-1 bg-white border-2 border-brand-dark px-3 py-1 rounded-full shadow-neo-sm text-xs font-bold">
-            <Sparkles className="w-4 h-4 text-brand-accent animate-spin" />
-            <span>Update Live Realtime</span>
+          <div>
+            <h3 className="font-heading text-xl sm:text-2xl font-bold text-brand-dark">
+              Dinding Ulasan Sobat Manis ✨
+            </h3>
+            <p className="text-xs sm:text-sm text-brand-dark/80 font-medium">
+              Kirim pesan manis, ulasan rasa favorit, atau saran untuk KiMiko Sweets!
+            </p>
           </div>
         </div>
 

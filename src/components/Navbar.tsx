@@ -77,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = "menu", setActiveTab
           <button
             type="button"
             onClick={() => setActiveTab && setActiveTab("reviews")}
-            className={`px-2 sm:px-3 py-1.5 rounded-neo-sm text-[11px] sm:text-sm font-bold border-2 border-brand-dark hidden xs:flex items-center gap-1 transition-all ${
+            className={`px-2 sm:px-3 py-1.5 rounded-neo-sm text-[11px] sm:text-sm font-bold border-2 border-brand-dark flex items-center gap-1 transition-all ${
               activeTab === "reviews"
                 ? "bg-brand-pink text-brand-dark shadow-neo-sm"
                 : "bg-white hover:bg-brand-pink/40"
