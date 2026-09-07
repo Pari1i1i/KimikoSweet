@@ -1,6 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fredoka, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
 
 const fredoka = Fredoka({
   subsets: ["latin"],
@@ -29,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${fredoka.variable} ${plusJakartaSans.variable}`}>
-      <body className="bg-brand-bg text-brand-dark font-body antialiased min-h-screen flex flex-col selection:bg-brand-butter selection:text-brand-dark">
+    <html lang="id" className={`${fredoka.variable} ${plusJakartaSans.variable} overflow-x-hidden`}>
+      <body className="bg-brand-bg text-brand-dark font-body antialiased min-h-screen w-full overflow-x-hidden flex flex-col selection:bg-brand-butter selection:text-brand-dark">
         {children}
       </body>
     </html>

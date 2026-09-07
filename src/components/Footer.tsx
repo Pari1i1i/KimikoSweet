@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { MascotChoux } from "./MascotChoux";
 import { Sparkles, ExternalLink } from "lucide-react";
 
@@ -9,8 +10,8 @@ export const Footer: React.FC = () => {
     <footer className="mt-auto border-t-neo border-brand-dark bg-brand-cream/60 py-8 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Brand Info */}
-        <div className="flex items-center gap-3 text-center md:text-left">
-          <div className="w-12 h-12 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center shadow-neo-sm">
+        <div className="flex items-center gap-3 text-center md:text-left justify-center md:justify-start">
+          <div className="w-12 h-12 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center shadow-neo-sm shrink-0">
             <MascotChoux pose="chef" size={38} />
           </div>
           <div>
@@ -18,13 +19,13 @@ export const Footer: React.FC = () => {
               KiMiko Sweets 🥟
             </h3>
             <p className="text-xs text-brand-dark/80 font-medium">
-              Kue Sus Artisan — Homemade fresh setiap hari dengan bahan premium.
+              Kue Sus SMAN 105 Jakarta — Homemade fresh setiap hari dengan bahan premium.
             </p>
           </div>
         </div>
 
         {/* Quick Links & Info */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-bold text-brand-dark">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-brand-dark">
           <div className="px-3 py-1.5 rounded-neo-sm bg-brand-pink border-2 border-brand-dark shadow-neo-sm flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
             <span>13 Varian Rasa Lengkap</span>
@@ -32,6 +33,12 @@ export const Footer: React.FC = () => {
           <div className="px-3 py-1.5 rounded-neo-sm bg-brand-butter border-2 border-brand-dark shadow-neo-sm flex items-center gap-1.5">
             <span>Mulai Rp6.000 / pcs</span>
           </div>
+          <Link
+            href="/admin"
+            className="px-3 py-1.5 rounded-neo-sm bg-white border-2 border-brand-dark shadow-neo-sm hover:bg-brand-butter neo-btn-sm flex items-center gap-1.5 text-brand-dark cursor-pointer"
+          >
+            <span>👨‍🍳 Dapur Penjual (Admin)</span>
+          </Link>
         </div>
 
         {/* Mandatory Copyright Pari1i1i */}

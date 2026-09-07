@@ -74,25 +74,19 @@ export const OrderStatusTracker: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Banner Info */}
-      <div className="p-5 rounded-neo-lg bg-brand-cream border-neo-thick border-brand-dark shadow-neo flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-center sm:text-left">
-          <div className="w-12 h-12 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center shrink-0">
-            <MascotChoux pose="thinking" size={40} />
+      <div className="p-4 sm:p-5 rounded-neo-lg bg-brand-cream border-neo-thick border-brand-dark shadow-neo flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-left">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center shrink-0 shadow-neo-sm">
+            <MascotChoux pose="thinking" size={38} />
           </div>
           <div>
             <h3 className="font-heading text-lg sm:text-xl font-bold text-brand-dark">
-              Cek Status Pesanan Realtime 🔴
+              Cek Status Pesanan
             </h3>
-            <p className="text-xs text-brand-dark/80 font-medium">
-              Data terhubung langsung ke dapur KiMiko Sweets tanpa perlu refresh halaman!
+            <p className="text-xs sm:text-sm text-brand-dark/80 font-medium">
+              Data terhubung langsung ke dapur KiMiko Sweets
             </p>
           </div>
-        </div>
-
-        {/* Live indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-brand-dark rounded-full shadow-neo-sm text-xs font-bold">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping"></span>
-          <span>Live Realtime</span>
         </div>
       </div>
 
