@@ -131,7 +131,7 @@ export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }
       </div>
 
       {/* Swipeable Rows */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pb-8 w-full">
         {sortedSummary.map((item) => {
           const isDone = Boolean(completedVariants[item.variantNama]);
           const activeQty = item.totalPendingQty + item.totalConfirmedQty;
@@ -240,52 +240,50 @@ const SwipeProductionRow: React.FC<SwipeRowProps> = ({
           transform: `translateX(${dragOffset}px)`,
           transition: isDragging ? "none" : "transform 0.2s ease-out",
         }}
-        className={`relative z-10 p-3.5 flex items-center justify-between gap-3 cursor-grab active:cursor-grabbing ${
+        className={`relative z-10 p-3 sm:p-3.5 flex items-center justify-between gap-2 sm:gap-3 cursor-grab active:cursor-grabbing w-full ${
           isDone ? "bg-green-50 text-green-950" : "bg-white text-brand-dark"
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-neo-sm bg-brand-cream border-2 border-brand-dark flex items-center justify-center shrink-0">
-            <PastryIllustration variantId={item.variantId} size={36} />
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-neo-sm bg-brand-cream border-2 border-brand-dark flex items-center justify-center shrink-0">
+            <PastryIllustration variantId={item.variantId} size={32} />
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h5
-                className={`font-heading font-bold text-sm ${
+                className={`font-heading font-bold text-xs sm:text-sm truncate ${
                   isDone ? "line-through text-brand-dark/50" : "text-brand-dark"
                 }`}
               >
                 {item.variantNama}
               </h5>
               {isDone && (
-                <span className="neo-badge text-[10px] bg-green-300 text-green-900 px-1.5 py-0.2 rounded">
-                  Sudah Dibuat
+                <span className="neo-badge text-[9px] sm:text-[10px] bg-green-300 text-green-900 px-1 py-0.2 rounded shrink-0">
+                  Selesai
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-brand-dark/70 mt-0.5">
-              <span>Pending: {item.totalPendingQty}</span>
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-brand-dark/70 mt-0.5">
+              <span>Pend: {item.totalPendingQty}</span>
               <span>•</span>
-              <span>Confirmed: {item.totalConfirmedQty}</span>
-              <span>•</span>
-              <span>Selesai: {item.totalCompletedQty}</span>
+              <span>Conf: {item.totalConfirmedQty}</span>
             </div>
           </div>
         </div>
 
         {/* Right Qty Badge & Toggle Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <div
-            className={`px-3 py-1 rounded-neo-sm border-2 border-brand-dark text-center shadow-neo-sm ${
+            className={`px-2 sm:px-3 py-1 rounded-neo-sm border-2 border-brand-dark text-center shadow-neo-sm ${
               activeQty > 0
                 ? "bg-brand-butter text-brand-dark font-extrabold"
                 : "bg-brand-bg text-brand-dark/40 font-semibold"
             }`}
           >
-            <span className="text-[10px] block -mb-1 font-bold uppercase">Harus Buat</span>
-            <span className="font-heading text-base font-extrabold">{activeQty} pcs</span>
+            <span className="text-[9px] sm:text-[10px] block -mb-0.5 sm:-mb-1 font-bold uppercase">Buat</span>
+            <span className="font-heading text-xs sm:text-base font-extrabold">{activeQty} pcs</span>
           </div>
 
           <button
@@ -293,12 +291,12 @@ const SwipeProductionRow: React.FC<SwipeRowProps> = ({
               e.stopPropagation();
               onToggle();
             }}
-            className={`w-8 h-8 rounded-neo-sm border-2 border-brand-dark flex items-center justify-center neo-btn-sm transition-all ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-neo-sm border-2 border-brand-dark flex items-center justify-center neo-btn-sm transition-all shrink-0 ${
               isDone ? "bg-green-400 text-brand-dark" : "bg-white hover:bg-brand-butter"
             }`}
             title="Klik atau Swipe untuk selesai"
           >
-            <Check className={`w-4 h-4 stroke-[3] ${isDone ? "scale-110" : "text-brand-dark/40"}`} />
+            <Check className={`w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] ${isDone ? "scale-110" : "text-brand-dark/40"}`} />
           </button>
         </div>
       </div>

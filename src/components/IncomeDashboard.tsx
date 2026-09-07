@@ -73,9 +73,9 @@ export const IncomeDashboard: React.FC<IncomeDashboardProps> = ({ orders }) => {
   return (
     <div className="space-y-4">
       {/* Session Header Card */}
-      <div className="p-4 sm:p-5 rounded-neo-lg bg-brand-pink border-neo-thick border-brand-dark shadow-neo flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-neo-lg bg-brand-butter border-neo-thick border-brand-dark shadow-neo flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 text-center md:text-left">
-          <div className="w-12 h-12 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center shrink-0 shadow-neo-sm">
+          <div className="w-12 h-12 rounded-neo-sm bg-white border-2 border-brand-dark flex items-center justify-center shrink-0 shadow-neo-sm">
             <MascotChoux pose="happy" size={40} />
           </div>
           <div>

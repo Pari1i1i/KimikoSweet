@@ -22,7 +22,7 @@ import {
 import Link from "next/link";
 
 function AdminPageContent() {
-  const { user, loading: authLoading, login, logout, isMockAuth } = useAuth();
+  const { user, loading: authLoading, login, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -65,7 +65,7 @@ function AdminPageContent() {
     );
   }
 
-  // Jika Belum Login: Tampilkan Login Box Neobrutalism
+  // Jika Belum Login: Tampilkan Login Box Neobrutalism di halaman /admin
   if (!user) {
     return (
       <div className="min-h-screen bg-brand-bg flex flex-col justify-between">
@@ -97,12 +97,6 @@ function AdminPageContent() {
               {errorMsg && (
                 <div className="p-3 rounded-neo-sm bg-red-100 border-2 border-red-500 text-red-900 text-xs font-bold">
                   {errorMsg}
-                </div>
-              )}
-
-              {isMockAuth && (
-                <div className="p-2.5 rounded-neo-sm bg-brand-cream border border-brand-dark/40 text-[11px] text-brand-dark font-medium">
-                  💡 <strong>Mode Demo / Offline:</strong> Masukkan email & password apa saja (min 6 karakter) untuk masuk ke dashboard.
                 </div>
               )}
 
@@ -240,7 +234,7 @@ function AdminPageContent() {
       </div>
 
       {/* Main Admin Content */}
-      <main className="max-w-6xl mx-auto p-4 sm:p-6 pb-24 w-full flex-1">
+      <main className="max-w-6xl mx-auto p-4 sm:p-6 pb-32 mb-8 w-full flex-1">
         {activeAdminTab === "orders" && <OrdersDatagrid orders={orders} />}
         {activeAdminTab === "production" && <ProductionDatagrid orders={orders} />}
         {activeAdminTab === "income" && <IncomeDashboard orders={orders} />}

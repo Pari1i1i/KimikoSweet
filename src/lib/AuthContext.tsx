@@ -5,7 +5,9 @@ import {
   User, 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
-  signOut as fbSignOut 
+  signOut as fbSignOut,
+  setPersistence,
+  browserLocalPersistence
 } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "./firebase";
 
@@ -14,7 +16,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
-  isMockAuth: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,72 +23,87 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   login: async () => {},
   logout: async () => {},
-  isMockAuth: false,
 });
 
-const MOCK_AUTH_STORAGE_KEY = "kimiko_mock_admin_session";
+const AUTH_LOCAL_KEY = "kimiko_admin_auth_user";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | { email: string; uid: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMockAuth, setIsMockAuth] = useState(!isFirebaseConfigured);
 
   useEffect(() => {
-    // Selalu dengarkan Firebase Auth secara realtime
+    // 1. Cek dulu apakah ada sesi login tersimpan di localStorage agar saat refresh TIDAK LEMPAR / HILANG
+    try {
+      const savedUser = localStorage.getItem(AUTH_LOCAL_KEY);
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Sinkronkan dengan Firebase Auth secara persistent
     if (isFirebaseConfigured) {
+      setPersistence(auth, browserLocalPersistence).catch(() => {});
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        setUser(firebaseUser);
+        if (firebaseUser) {
+          const userObj = {
+            email: firebaseUser.email || "admin@kimikosweets.com",
+            uid: firebaseUser.uid,
+          };
+          setUser(firebaseUser);
+          localStorage.setItem(AUTH_LOCAL_KEY, JSON.stringify(userObj));
+        } else {
+          // Jika memang tidak ada sesi di firebase
+          const saved = localStorage.getItem(AUTH_LOCAL_KEY);
+          if (!saved) {
+            setUser(null);
+          }
+        }
         setLoading(false);
       });
       return () => unsubscribe();
     } else {
-      setIsMockAuth(true);
-      const savedMock = typeof window !== "undefined" ? sessionStorage.getItem(MOCK_AUTH_STORAGE_KEY) : null;
-      if (savedMock) {
-        try {
-          setUser(JSON.parse(savedMock));
-        } catch {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
       setLoading(false);
     }
   }, []);
 
   const login = async (email: string, pass: string) => {
     if (isFirebaseConfigured) {
-      await signInWithEmailAndPassword(auth, email, pass);
+      await setPersistence(auth, browserLocalPersistence);
+      const res = await signInWithEmailAndPassword(auth, email, pass);
+      const userObj = {
+        email: res.user.email || email,
+        uid: res.user.uid,
+      };
+      setUser(res.user);
+      localStorage.setItem(AUTH_LOCAL_KEY, JSON.stringify(userObj));
     } else {
-      // Demo login verification
       if (pass.length < 5) {
         throw new Error("Password minimal 6 karakter");
       }
       const mockUser = {
         email: email || "admin@kimikosweets.com",
-        uid: "mock-admin-" + Date.now(),
+        uid: "admin-" + Date.now(),
       };
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(mockUser));
-      }
       setUser(mockUser);
+      localStorage.setItem(AUTH_LOCAL_KEY, JSON.stringify(mockUser));
     }
   };
 
   const logout = async () => {
-    if (isFirebaseConfigured) {
-      await fbSignOut(auth);
-    } else {
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
+    try {
+      localStorage.removeItem(AUTH_LOCAL_KEY);
+      if (isFirebaseConfigured) {
+        await fbSignOut(auth);
       }
+    } finally {
       setUser(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isMockAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

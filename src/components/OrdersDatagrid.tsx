@@ -151,7 +151,7 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
           </h4>
         </div>
       ) : (
-        <div className="bg-white rounded-neo border-neo-thick border-brand-dark shadow-neo overflow-hidden">
+        <div className="bg-white rounded-neo border-neo-thick border-brand-dark shadow-neo overflow-hidden mb-12">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
