@@ -107,7 +107,7 @@ export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }
           </div>
           <div>
             <h4 className="font-heading font-bold text-base text-brand-dark">
-              Datagrid Total Produksi per Varian (Rekap Otomatis)
+              Total Produksi per Varian
             </h4>
             <p className="text-xs text-brand-dark/70 font-medium">
               Akumulasi jumlah kue sus yang harus dibuat oleh dapur. Swipe/geser baris untuk tandai selesai!

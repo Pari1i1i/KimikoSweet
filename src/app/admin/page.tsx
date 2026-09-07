@@ -240,7 +240,7 @@ function AdminPageContent() {
       </div>
 
       {/* Main Admin Content */}
-      <main className="max-w-6xl mx-auto p-4 sm:p-6 w-full flex-1">
+      <main className="max-w-6xl mx-auto p-4 sm:p-6 pb-24 w-full flex-1">
         {activeAdminTab === "orders" && <OrdersDatagrid orders={orders} />}
         {activeAdminTab === "production" && <ProductionDatagrid orders={orders} />}
         {activeAdminTab === "income" && <IncomeDashboard orders={orders} />}

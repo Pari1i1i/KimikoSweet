@@ -83,9 +83,6 @@ export const IncomeDashboard: React.FC<IncomeDashboardProps> = ({ orders }) => {
               <h4 className="font-heading font-extrabold text-lg text-brand-dark">
                 {session ? session.namaSesi || "Sesi Aktif" : "Belum Ada Sesi Aktif"}
               </h4>
-              <span className="neo-badge text-[10px] px-2 py-0.5 rounded-full bg-brand-butter text-brand-dark">
-                Live Otomatis
-              </span>
             </div>
             <p className="text-xs text-brand-dark/80 font-medium">
               {session
