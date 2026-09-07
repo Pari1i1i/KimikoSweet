@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { dataService } from "@/lib/dataService";
 import { Review } from "@/types";
 import { MascotChoux } from "./MascotChoux";
-import { MessageSquarePlus, Star, Send, Sparkles, User, Heart } from "lucide-react";
+import { Star, Send, Sparkles, Heart } from "lucide-react";
 
 export const ReviewsWall: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);

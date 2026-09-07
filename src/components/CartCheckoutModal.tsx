@@ -108,7 +108,7 @@ export const CartCheckoutModal: React.FC = () => {
           origin: { y: 0.6 },
           colors: ["#FF5C9A", "#FFE066", "#FFD3E6", "#1A1A1A"],
         });
-      } catch (err) {
+      } catch {
         // ignore if not supported
       }
     } catch (error) {

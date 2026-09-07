@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Product } from "@/types";
 import { useCart } from "@/lib/CartContext";
 import { PastryIllustration } from "./PastryIllustration";
-import { Plus, Minus, Check, ShoppingBag, Sparkles } from "lucide-react";
+import { Plus, Minus, Check, ShoppingBag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;

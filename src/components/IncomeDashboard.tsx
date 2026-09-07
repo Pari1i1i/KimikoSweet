@@ -8,12 +8,7 @@ import {
   Wallet, 
   TrendingUp, 
   DollarSign, 
-  PlusCircle, 
-  Sparkles, 
-  CheckCircle2, 
-  RotateCcw,
-  ArrowUpRight,
-  PieChart
+  PlusCircle
 } from "lucide-react";
 
 interface IncomeDashboardProps {

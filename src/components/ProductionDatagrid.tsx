@@ -6,13 +6,9 @@ import { PastryIllustration } from "./PastryIllustration";
 import { PRODUCTS_DATA } from "@/data/products";
 import { 
   Check, 
-  Sparkles, 
   RotateCcw, 
-  Hand, 
-  AlertCircle,
-  Clock,
-  Layers,
-  CheckCircle2
+  Layers, 
+  CheckCircle2 
 } from "lucide-react";
 
 interface ProductionDatagridProps {

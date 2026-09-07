@@ -9,7 +9,6 @@ import {
   Clock, 
   CheckCircle, 
   Sparkles, 
-  PackageCheck, 
   QrCode, 
   Banknote,
   RefreshCw

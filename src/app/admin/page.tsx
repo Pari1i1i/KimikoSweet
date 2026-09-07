@@ -9,17 +9,14 @@ import { OrdersDatagrid } from "@/components/OrdersDatagrid";
 import { ProductionDatagrid } from "@/components/ProductionDatagrid";
 import { IncomeDashboard } from "@/components/IncomeDashboard";
 import { MascotChoux } from "@/components/MascotChoux";
-import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { 
   Lock, 
-  ChefHat, 
   Layers, 
   Wallet, 
   ShoppingBag, 
   LogOut, 
   ArrowLeft,
-  Sparkles,
   RefreshCw
 } from "lucide-react";
 import Link from "next/link";
@@ -34,12 +31,10 @@ function AdminPageContent() {
   // Admin Active Tab
   const [activeAdminTab, setActiveAdminTab] = useState<"orders" | "production" | "income">("orders");
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
 
   useEffect(() => {
     const unsub = dataService.subscribeOrders((data) => {
       setOrders(data);
-      setLoadingOrders(false);
     });
     return () => unsub();
   }, []);
@@ -50,9 +45,13 @@ function AdminPageContent() {
     setIsLoggingIn(true);
     try {
       await login(email, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrorMsg(err.message || "Email atau password salah.");
+      if (err instanceof Error) {
+        setErrorMsg(err.message);
+      } else {
+        setErrorMsg("Email atau password salah.");
+      }
     } finally {
       setIsLoggingIn(false);
     }

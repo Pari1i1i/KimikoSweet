@@ -2,12 +2,10 @@ import {
   collection, 
   doc, 
   setDoc, 
-  addDoc, 
   updateDoc, 
   onSnapshot, 
   query, 
   orderBy, 
-  getDocs,
   Unsubscribe 
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
@@ -32,7 +30,7 @@ function getLocalData<T>(key: string, defaultVal: T): T {
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultVal;
-  } catch (e) {
+  } catch {
     return defaultVal;
   }
 }
@@ -61,8 +59,8 @@ export const dataService = {
           q,
           (snapshot) => {
             const list: Order[] = [];
-            snapshot.forEach((doc) => {
-              list.push({ id: doc.id, ...doc.data() } as Order);
+            snapshot.forEach((docSnap) => {
+              list.push({ id: docSnap.id, ...docSnap.data() } as Order);
             });
             callback(list);
           },
@@ -154,8 +152,8 @@ export const dataService = {
           q,
           (snapshot) => {
             const list: Review[] = [];
-            snapshot.forEach((doc) => {
-              list.push({ id: doc.id, ...doc.data() } as Review);
+            snapshot.forEach((docSnap) => {
+              list.push({ id: docSnap.id, ...docSnap.data() } as Review);
             });
             callback(list.length > 0 ? list : INITIAL_REVIEWS);
           },
@@ -291,3 +289,4 @@ export const dataService = {
     listeners.sessions.forEach((l) => l(session));
   },
 };
+

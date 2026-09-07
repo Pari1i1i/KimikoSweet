@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (savedMock) {
         try {
           setUser(JSON.parse(savedMock));
-        } catch (e) {
+        } catch {
           setUser(null);
         }
       }

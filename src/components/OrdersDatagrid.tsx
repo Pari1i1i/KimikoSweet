@@ -1,19 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { dataService } from "@/lib/dataService";
 import { Order, OrderStatus } from "@/types";
 import { MascotChoux } from "./MascotChoux";
 import { 
-  Check, 
-  Clock, 
   CheckCheck, 
   Search, 
   QrCode, 
-  Banknote, 
-  Filter, 
-  ArrowUpDown,
-  FileSpreadsheet
+  Banknote
 } from "lucide-react";
 
 interface OrdersDatagridProps {
