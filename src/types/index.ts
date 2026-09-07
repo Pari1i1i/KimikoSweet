@@ -1,5 +1,6 @@
 export type PaymentMethod = "qris" | "cash";
 export type OrderStatus = "pending" | "confirmed" | "completed";
+export type HariPengambilan = "Senin" | "Kamis";
 
 export interface OrderItem {
   namaVarian: string;
@@ -22,6 +23,7 @@ export interface Order {
   id: string;
   namaPembeli: string;
   kelas: string;
+  hariPengambilan: HariPengambilan;
   items: OrderItem[];
   totalHarga: number;
   totalPcs: number;

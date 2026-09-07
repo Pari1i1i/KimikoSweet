@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isMockAuth, setIsMockAuth] = useState(!isFirebaseConfigured);
 
   useEffect(() => {
+    // Selalu dengarkan Firebase Auth secara realtime
     if (isFirebaseConfigured) {
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         setUser(firebaseUser);
@@ -40,15 +41,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return () => unsubscribe();
     } else {
-      // Mock auth fallback for development / offline preview
       setIsMockAuth(true);
-      const savedMock = localStorage.getItem(MOCK_AUTH_STORAGE_KEY);
+      const savedMock = typeof window !== "undefined" ? sessionStorage.getItem(MOCK_AUTH_STORAGE_KEY) : null;
       if (savedMock) {
         try {
           setUser(JSON.parse(savedMock));
         } catch {
           setUser(null);
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
     }
@@ -66,7 +68,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: email || "admin@kimikosweets.com",
         uid: "mock-admin-" + Date.now(),
       };
-      localStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(MOCK_AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+      }
       setUser(mockUser);
     }
   };
@@ -75,7 +79,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isFirebaseConfigured) {
       await fbSignOut(auth);
     } else {
-      localStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem(MOCK_AUTH_STORAGE_KEY);
+      }
       setUser(null);
     }
   };

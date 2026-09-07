@@ -16,6 +16,7 @@ interface OrdersDatagridProps {
 }
 
 export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
+  const [filterHari, setFilterHari] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -41,13 +42,15 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
 
   const filteredOrders = orders.filter((ord) => {
     const matchStatus = filterStatus === "all" || ord.status === filterStatus;
+    const matchHari = filterHari === "all" || ord.hariPengambilan === filterHari;
     const query = search.toLowerCase().trim();
     const matchSearch =
       !query ||
       ord.namaPembeli.toLowerCase().includes(query) ||
       ord.kelas.toLowerCase().includes(query) ||
+      (ord.hariPengambilan && ord.hariPengambilan.toLowerCase().includes(query)) ||
       ord.id.toLowerCase().includes(query);
-    return matchStatus && matchSearch;
+    return matchStatus && matchHari && matchSearch;
   });
 
   return (
@@ -55,10 +58,11 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
       {/* Controls & Search */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-neo border-2 border-brand-dark shadow-neo-sm">
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+        <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+          {/* Filter Status */}
           <button
             onClick={() => setFilterStatus("all")}
-            className={`px-3 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
               filterStatus === "all"
                 ? "bg-brand-dark text-white shadow-neo-sm"
                 : "bg-brand-bg hover:bg-brand-pink/50"
@@ -68,7 +72,7 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
           </button>
           <button
             onClick={() => setFilterStatus("pending")}
-            className={`px-3 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
               filterStatus === "pending"
                 ? "bg-brand-butter text-brand-dark shadow-neo-sm"
                 : "bg-brand-bg hover:bg-brand-butter/50"
@@ -78,7 +82,7 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
           </button>
           <button
             onClick={() => setFilterStatus("confirmed")}
-            className={`px-3 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
               filterStatus === "confirmed"
                 ? "bg-brand-pink text-brand-dark shadow-neo-sm"
                 : "bg-brand-bg hover:bg-brand-pink/50"
@@ -88,7 +92,7 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
           </button>
           <button
             onClick={() => setFilterStatus("completed")}
-            className={`px-3 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
               filterStatus === "completed"
                 ? "bg-green-300 text-brand-dark shadow-neo-sm"
                 : "bg-brand-bg hover:bg-green-100"
@@ -96,13 +100,40 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
           >
             Selesai ({orders.filter((o) => o.status === "completed").length})
           </button>
+
+          {/* Filter Hari (Senin / Kamis) */}
+          <span className="text-brand-dark/30 font-bold px-1 hidden sm:inline">|</span>
+          <button
+            onClick={() => setFilterHari("all")}
+            className={`px-2 py-1 rounded-neo-sm text-[11px] font-bold border ${
+              filterHari === "all" ? "bg-brand-cream border-brand-dark font-extrabold" : "bg-white border-brand-dark/40"
+            }`}
+          >
+            Semua Hari
+          </button>
+          <button
+            onClick={() => setFilterHari("Senin")}
+            className={`px-2 py-1 rounded-neo-sm text-[11px] font-bold border ${
+              filterHari === "Senin" ? "bg-brand-pink border-brand-dark font-extrabold" : "bg-white border-brand-dark/40"
+            }`}
+          >
+            Senin
+          </button>
+          <button
+            onClick={() => setFilterHari("Kamis")}
+            className={`px-2 py-1 rounded-neo-sm text-[11px] font-bold border ${
+              filterHari === "Kamis" ? "bg-brand-butter border-brand-dark font-extrabold" : "bg-white border-brand-dark/40"
+            }`}
+          >
+            Kamis
+          </button>
         </div>
 
         {/* Search */}
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-60">
           <input
             type="text"
-            placeholder="Cari nama / kelas..."
+            placeholder="Cari nama / kelas / hari..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-3 py-1.5 pl-8 rounded-neo-sm neo-input text-xs font-semibold bg-brand-bg"
@@ -126,6 +157,7 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
               <thead>
                 <tr className="bg-brand-butter border-b-2 border-brand-dark font-heading text-xs font-bold text-brand-dark uppercase tracking-wider">
                   <th className="p-3 border-r-2 border-brand-dark">ID & Waktu</th>
+                  <th className="p-3 border-r-2 border-brand-dark">Hari</th>
                   <th className="p-3 border-r-2 border-brand-dark">Pembeli & Kelas</th>
                   <th className="p-3 border-r-2 border-brand-dark min-w-[200px]">Rincian Item</th>
                   <th className="p-3 border-r-2 border-brand-dark">Bayar</th>
@@ -156,6 +188,19 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                      </span>
+                    </td>
+
+                    {/* Hari Pengambilan */}
+                    <td className="p-3 border-r-2 border-brand-dark/10">
+                      <span
+                        className={`inline-block px-2.5 py-1 rounded-neo-sm text-xs font-extrabold border border-brand-dark shadow-[1px_1px_0px_#1A1A1A] ${
+                          ord.hariPengambilan === "Kamis"
+                            ? "bg-brand-butter text-brand-dark"
+                            : "bg-brand-pink text-brand-dark"
+                        }`}
+                      >
+                        {ord.hariPengambilan || "Senin"}
                       </span>
                     </td>
 

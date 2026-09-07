@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useCart } from "@/lib/CartContext";
 import { dataService } from "@/lib/dataService";
-import { PaymentMethod } from "@/types";
+import { PaymentMethod, HariPengambilan } from "@/types";
 import { MascotChoux } from "./MascotChoux";
 import { PastryIllustration } from "./PastryIllustration";
 import confetti from "canvas-confetti";
@@ -19,7 +19,8 @@ import {
   CheckCircle2, 
   ArrowRight,
   ClipboardCopy,
-  Info
+  Info,
+  Calendar
 } from "lucide-react";
 
 export const CartCheckoutModal: React.FC = () => {
@@ -37,6 +38,7 @@ export const CartCheckoutModal: React.FC = () => {
   const [step, setStep] = useState<"cart" | "checkout" | "success">("cart");
   const [namaPembeli, setNamaPembeli] = useState("");
   const [kelas, setKelas] = useState("");
+  const [hariPengambilan, setHariPengambilan] = useState<HariPengambilan>("Senin");
   const [notes, setNotes] = useState("");
   const [metodeBayar, setMetodeBayar] = useState<PaymentMethod>("qris");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,6 +61,7 @@ export const CartCheckoutModal: React.FC = () => {
       setStep("cart");
       setNamaPembeli("");
       setKelas("");
+      setHariPengambilan("Senin");
       setNotes("");
     }
   };
@@ -87,6 +90,7 @@ export const CartCheckoutModal: React.FC = () => {
       const newOrderId = await dataService.createOrder({
         namaPembeli: namaPembeli.trim(),
         kelas: kelas.trim(),
+        hariPengambilan,
         items: orderItems,
         totalHarga: totalPrice,
         totalPcs: totalItems,
@@ -288,6 +292,39 @@ export const CartCheckoutModal: React.FC = () => {
                   onChange={(e) => setKelas(e.target.value)}
                   className="w-full px-3 py-2 rounded-neo-sm neo-input bg-white text-sm font-medium text-brand-dark"
                 />
+              </div>
+
+              {/* Form Input: Hari Pengambilan (Senin / Kamis) */}
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-brand-accent" />
+                  <span>Hari Pengambilan Pesanan <span className="text-brand-accent">*</span></span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setHariPengambilan("Senin")}
+                    className={`p-2.5 rounded-neo-sm border-2 border-brand-dark font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
+                      hariPengambilan === "Senin"
+                        ? "bg-brand-accent text-white shadow-neo-sm"
+                        : "bg-white text-brand-dark hover:bg-brand-pink/30"
+                    }`}
+                  >
+                    <span>📅 Hari Senin</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setHariPengambilan("Kamis")}
+                    className={`p-2.5 rounded-neo-sm border-2 border-brand-dark font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
+                      hariPengambilan === "Kamis"
+                        ? "bg-brand-butter text-brand-dark shadow-neo-sm"
+                        : "bg-white text-brand-dark hover:bg-brand-butter/30"
+                    }`}
+                  >
+                    <span>📅 Hari Kamis</span>
+                  </button>
+                </div>
               </div>
 
               {/* Form Input: Notes */}

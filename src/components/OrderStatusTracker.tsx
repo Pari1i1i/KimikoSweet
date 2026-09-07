@@ -130,12 +130,15 @@ export const OrderStatusTracker: React.FC = () => {
               {/* Header Card */}
               <div className="flex items-start justify-between gap-2 border-b-2 border-brand-dark/10 pb-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <h4 className="font-heading font-extrabold text-base text-brand-dark">
                       {ord.namaPembeli}
                     </h4>
-                    <span className="neo-badge text-[11px] px-2 py-0.5 rounded-md bg-brand-cream text-brand-dark">
+                    <span className="neo-badge text-[10px] px-2 py-0.5 rounded-md bg-brand-cream text-brand-dark">
                       {ord.kelas}
+                    </span>
+                    <span className="neo-badge text-[10px] px-2 py-0.5 rounded-md bg-brand-butter text-brand-dark font-extrabold">
+                      📅 {ord.hariPengambilan || "Senin"}
                     </span>
                   </div>
                   <p className="text-xs font-bold text-brand-accent font-mono mt-0.5">
