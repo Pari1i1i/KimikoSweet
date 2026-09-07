@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Products: siapa saja bisa baca, hanya admin/auth yang bisa tulis jika perlu
+    match /products/{document=**} {
+      allow read: if true;
+      allow write: if true; // mudah di-seed dari browser
+    }
+    
+    // Orders: pembeli bisa buat order dan baca status order mereka
+    match /orders/{document=**} {
+      allow read, create, update: if true;
+      allow delete: if request.auth != null;
+    }
+    
+    // Production & Income Sessions: pembeli/penjual
+    match /productionSessions/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /incomeSessions/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Reviews: siapapun bisa baca & tulis komentar
+    match /reviews/{document=**} {
+      allow read, create: if true;
+      allow update, delete: if request.auth != null;
+    }
+  }
+}
