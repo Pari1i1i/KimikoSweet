@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PRODUCTS_DATA } from "@/data/products";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -15,12 +15,8 @@ import {
   Sparkles, 
   ShoppingBag, 
   ArrowRight, 
-  Heart, 
   Search, 
-  CheckCircle,
-  Star,
-  Layers,
-  ChefHat
+  Star
 } from "lucide-react";
 
 function HomePageContent() {

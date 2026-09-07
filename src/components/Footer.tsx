@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { MascotChoux } from "./MascotChoux";
-import { Sparkles, ExternalLink, Code2 } from "lucide-react";
+import { Sparkles, ExternalLink } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
