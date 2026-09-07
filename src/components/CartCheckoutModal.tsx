@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useCart } from "@/lib/CartContext";
 import { dataService } from "@/lib/dataService";
-import { PaymentMethod, HariPengambilan } from "@/types";
+import { PaymentMethod } from "@/types";
 import { MascotChoux } from "./MascotChoux";
 import { PastryIllustration } from "./PastryIllustration";
 import confetti from "canvas-confetti";
@@ -42,7 +42,20 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
   const [step, setStep] = useState<"cart" | "checkout" | "success">("cart");
   const [namaPembeli, setNamaPembeli] = useState("");
   const [kelas, setKelas] = useState("");
-  const [hariPengambilan, setHariPengambilan] = useState<HariPengambilan>("Senin");
+  const [noTelepon, setNoTelepon] = useState("");
+  const [tanggalPengambilan, setTanggalPengambilan] = useState(() => {
+    // Default cari tanggal Senin atau Kamis terdekat hari ini / ke depan
+    const now = new Date();
+    const d = new Date(now);
+    for (let i = 0; i < 7; i++) {
+      const day = d.getDay();
+      if (day === 1 || day === 4) { // 1 = Senin, 4 = Kamis
+        return d.toISOString().split("T")[0];
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return "";
+  });
   const [notes, setNotes] = useState("");
   const [isAnonim, setIsAnonim] = useState(false);
   const [metodeBayar, setMetodeBayar] = useState<PaymentMethod>("qris");
@@ -66,7 +79,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
       setStep("cart");
       setNamaPembeli("");
       setKelas("");
-      setHariPengambilan("Senin");
+      setNoTelepon("");
       setNotes("");
       setIsAnonim(false);
     }
@@ -77,10 +90,32 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
     setStep("checkout");
   };
 
+  const getDayName = (dateStr: string): "Senin" | "Kamis" | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return null;
+    const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const day = dt.getDay();
+    if (day === 1) return "Senin";
+    if (day === 4) return "Kamis";
+    return null;
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!namaPembeli.trim() || !kelas.trim()) {
       alert("Mohon lengkapi Nama Pembeli dan Kelas kamu ya!");
+      return;
+    }
+
+    if (!tanggalPengambilan) {
+      alert("Mohon pilih tanggal pengambilan terlebih dahulu.");
+      return;
+    }
+
+    const dayName = getDayName(tanggalPengambilan);
+    if (!dayName) {
+      alert("Pemesanan hanya tersedia untuk hari Senin atau Kamis! Silakan pilih tanggal yang jatuh pada hari Senin atau Kamis.");
       return;
     }
 
@@ -96,7 +131,9 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
       const newOrderId = await dataService.createOrder({
         namaPembeli: namaPembeli.trim(),
         kelas: kelas.trim(),
-        hariPengambilan,
+        noTelepon: noTelepon.trim() || undefined,
+        hariPengambilan: dayName,
+        tanggalPengambilan,
         items: orderItems,
         totalHarga: totalPrice,
         totalPcs: totalItems,
@@ -301,37 +338,62 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
                 />
               </div>
 
-              {/* Form Input: Hari Pengambilan (Senin / Kamis) */}
+              {/* Form Input: Nomor Telepon / WhatsApp */}
               <div>
-                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-brand-accent" />
-                  <span>Hari Pengambilan Pesanan <span className="text-brand-accent">*</span></span>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1">
+                  Nomor WhatsApp / Telepon <span className="text-brand-accent">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setHariPengambilan("Senin")}
-                    className={`p-2.5 rounded-neo-sm border-2 border-brand-dark font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
-                      hariPengambilan === "Senin"
-                        ? "bg-brand-accent text-white shadow-neo-sm"
-                        : "bg-white text-brand-dark hover:bg-brand-pink/30"
-                    }`}
-                  >
-                    <span>📅 Hari Senin</span>
-                  </button>
+                <input
+                  type="tel"
+                  required
+                  placeholder="Misal: 081234567890"
+                  value={noTelepon}
+                  onChange={(e) => setNoTelepon(e.target.value)}
+                  className="w-full px-3 py-2 rounded-neo-sm neo-input bg-white text-sm font-medium text-brand-dark"
+                />
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setHariPengambilan("Kamis")}
-                    className={`p-2.5 rounded-neo-sm border-2 border-brand-dark font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
-                      hariPengambilan === "Kamis"
-                        ? "bg-brand-butter text-brand-dark shadow-neo-sm"
-                        : "bg-white text-brand-dark hover:bg-brand-butter/30"
-                    }`}
-                  >
-                    <span>📅 Hari Kamis</span>
-                  </button>
-                </div>
+              {/* Form Input: Tanggal Pengambilan (HANYA SENIN & KAMIS) */}
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-brand-accent" />
+                    <span>Pilih Tanggal Pengambilan <span className="text-brand-accent">*</span></span>
+                  </span>
+                  <span className="text-[10px] font-extrabold text-brand-accent bg-brand-pink/50 px-2 py-0.5 rounded-full border border-brand-dark/20">
+                    Khusus Senin & Kamis
+                  </span>
+                </label>
+
+                <input
+                  type="date"
+                  required
+                  value={tanggalPengambilan}
+                  onChange={(e) => {
+                    const chosen = e.target.value;
+                    const day = getDayName(chosen);
+                    if (chosen && !day) {
+                      alert("⚠️ KiMiko Sweets hanya melayani pengambilan di hari SENIN atau KAMIS. Silakan pilih tanggal yang jatuh pada hari Senin atau Kamis ya!");
+                    }
+                    setTanggalPengambilan(chosen);
+                  }}
+                  className="w-full px-3 py-2 rounded-neo-sm neo-input bg-white text-sm font-bold text-brand-dark cursor-pointer"
+                />
+
+                {/* Status Validasi Tanggal Terpilih */}
+                {tanggalPengambilan && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                    {getDayName(tanggalPengambilan) ? (
+                      <span className="inline-flex items-center gap-1 font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded border border-green-600">
+                        ✓ Terpilih: Hari {getDayName(tanggalPengambilan)}, {new Date(tanggalPengambilan + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded border border-red-500 text-[11px]">
+                        ⚠️ Tanggal ini bukan hari Senin atau Kamis. Silakan ganti tanggal.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Form Input: Notes */}

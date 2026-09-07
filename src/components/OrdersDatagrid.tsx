@@ -8,7 +8,8 @@ import {
   CheckCheck, 
   Search, 
   QrCode, 
-  Banknote
+  Banknote,
+  MessageSquare
 } from "lucide-react";
 
 interface OrdersDatagridProps {
@@ -40,14 +41,37 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
     }
   };
 
+  const formatTanggalPengambilan = (tanggalStr?: string, fallbackHari?: string) => {
+    if (!tanggalStr) return fallbackHari || "Senin";
+    try {
+      const dt = new Date(tanggalStr + "T00:00:00");
+      const dayName = dt.getDay() === 4 ? "Kamis" : "Senin";
+      const formatted = dt.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
+      return `${dayName}, ${formatted}`;
+    } catch {
+      return tanggalStr;
+    }
+  };
+
   const filteredOrders = orders.filter((ord) => {
     const matchStatus = filterStatus === "all" || ord.status === filterStatus;
-    const matchHari = filterHari === "all" || ord.hariPengambilan === filterHari;
+    const matchHari =
+      filterHari === "all" ||
+      ord.hariPengambilan === filterHari ||
+      (ord.tanggalPengambilan &&
+        (filterHari === "Senin"
+          ? new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 1
+          : new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 4));
     const query = search.toLowerCase().trim();
     const matchSearch =
       !query ||
       ord.namaPembeli.toLowerCase().includes(query) ||
       ord.kelas.toLowerCase().includes(query) ||
+      (ord.noTelepon && ord.noTelepon.includes(query)) ||
+      (ord.tanggalPengambilan && ord.tanggalPengambilan.includes(query)) ||
       (ord.hariPengambilan && ord.hariPengambilan.toLowerCase().includes(query)) ||
       ord.id.toLowerCase().includes(query);
     return matchStatus && matchHari && matchSearch;
@@ -130,10 +154,10 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
         </div>
 
         {/* Search */}
-        <div className="relative w-full sm:w-60">
+        <div className="relative w-full sm:w-64">
           <input
             type="text"
-            placeholder="Cari nama / kelas / hari..."
+            placeholder="Cari nama / kelas / no telp / tgl..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-3 py-1.5 pl-8 rounded-neo-sm neo-input text-xs font-semibold bg-brand-bg"
@@ -157,8 +181,8 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
               <thead>
                 <tr className="bg-brand-butter border-b-2 border-brand-dark font-heading text-xs font-bold text-brand-dark uppercase tracking-wider">
                   <th className="p-3 border-r-2 border-brand-dark">ID & Waktu</th>
-                  <th className="p-3 border-r-2 border-brand-dark">Hari</th>
-                  <th className="p-3 border-r-2 border-brand-dark">Pembeli & Kelas</th>
+                  <th className="p-3 border-r-2 border-brand-dark">Jadwal Ambil</th>
+                  <th className="p-3 border-r-2 border-brand-dark">Pembeli & Kontak</th>
                   <th className="p-3 border-r-2 border-brand-dark min-w-[200px]">Rincian Item</th>
                   <th className="p-3 border-r-2 border-brand-dark">Bayar</th>
                   <th className="p-3 border-r-2 border-brand-dark">Total</th>
@@ -191,20 +215,20 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                       </span>
                     </td>
 
-                    {/* Hari Pengambilan */}
+                    {/* Jadwal Pengambilan */}
                     <td className="p-3 border-r-2 border-brand-dark/10">
                       <span
                         className={`inline-block px-2.5 py-1 rounded-neo-sm text-xs font-extrabold border border-brand-dark shadow-[1px_1px_0px_#1A1A1A] ${
-                          ord.hariPengambilan === "Kamis"
+                          ord.hariPengambilan === "Kamis" || (ord.tanggalPengambilan && new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 4)
                             ? "bg-brand-butter text-brand-dark"
                             : "bg-brand-pink text-brand-dark"
                         }`}
                       >
-                        {ord.hariPengambilan || "Senin"}
+                        📅 {formatTanggalPengambilan(ord.tanggalPengambilan, ord.hariPengambilan)}
                       </span>
                     </td>
 
-                    {/* Customer */}
+                    {/* Customer & Contact */}
                     <td className="p-3 border-r-2 border-brand-dark/10">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-heading font-bold text-brand-dark block text-sm">
@@ -216,9 +240,26 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                           </span>
                         )}
                       </div>
-                      <span className="inline-block mt-0.5 px-2 py-0.2 rounded-md bg-brand-pink/50 text-[10px] font-bold border border-brand-dark/30">
-                        {ord.kelas}
-                      </span>
+
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
+                        <span className="inline-block px-2 py-0.2 rounded-md bg-brand-pink/50 text-[10px] font-bold border border-brand-dark/30">
+                          {ord.kelas}
+                        </span>
+
+                        {ord.noTelepon && (
+                          <a
+                            href={`https://wa.me/${ord.noTelepon.replace(/\D/g, "").replace(/^0/, "62")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100 border border-green-600 text-green-800 text-[10px] font-bold hover:bg-green-200 transition-colors"
+                            title="Chat WhatsApp Pembeli"
+                          >
+                            <MessageSquare className="w-3 h-3 text-green-700" />
+                            <span>{ord.noTelepon}</span>
+                          </a>
+                        )}
+                      </div>
+
                       {ord.notes && (
                         <p className="text-[10px] text-brand-dark/80 font-medium italic mt-1 bg-brand-bg p-1.5 rounded border border-brand-dark/20">
                           Catatan: {ord.notes}

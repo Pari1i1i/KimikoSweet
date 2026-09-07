@@ -23,7 +23,9 @@ export interface Order {
   id: string;
   namaPembeli: string;
   kelas: string;
-  hariPengambilan: HariPengambilan;
+  noTelepon?: string;
+  hariPengambilan?: HariPengambilan;
+  tanggalPengambilan: string; // Format ISO string YYYY-MM-DD atau formatted string
   items: OrderItem[];
   totalHarga: number;
   totalPcs: number;

@@ -35,13 +35,31 @@ export const OrderStatusTracker: React.FC = () => {
     }).format(val);
   };
 
+  const formatTanggalIndo = (tanggalStr?: string, fallbackHari?: string) => {
+    if (!tanggalStr) return `📅 ${fallbackHari || "Senin"}`;
+    try {
+      const dt = new Date(tanggalStr + "T00:00:00");
+      const dayName = dt.getDay() === 4 ? "Kamis" : "Senin";
+      const formatted = dt.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+      return `📅 ${dayName}, ${formatted}`;
+    } catch {
+      return `📅 ${tanggalStr}`;
+    }
+  };
+
   const filteredOrders = orders.filter((ord) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase().trim();
     return (
       ord.id.toLowerCase().includes(query) ||
       ord.namaPembeli.toLowerCase().includes(query) ||
-      ord.kelas.toLowerCase().includes(query)
+      ord.kelas.toLowerCase().includes(query) ||
+      (ord.tanggalPengambilan && ord.tanggalPengambilan.includes(query)) ||
+      (ord.hariPengambilan && ord.hariPengambilan.toLowerCase().includes(query))
     );
   });
 
@@ -138,7 +156,7 @@ export const OrderStatusTracker: React.FC = () => {
                       {ord.kelas}
                     </span>
                     <span className="neo-badge text-[10px] px-2 py-0.5 rounded-md bg-brand-butter text-brand-dark font-extrabold">
-                      📅 {ord.hariPengambilan || "Senin"}
+                      {formatTanggalIndo(ord.tanggalPengambilan, ord.hariPengambilan)}
                     </span>
                   </div>
                   <p className="text-xs font-bold text-brand-accent font-mono mt-0.5">
