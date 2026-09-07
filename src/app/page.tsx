@@ -52,7 +52,7 @@ function HomePageContent() {
                 <div className="w-full md:col-span-7 space-y-3.5 sm:space-y-4 text-center md:text-left flex flex-col items-center md:items-start">
                   <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:py-1.5 rounded-full bg-brand-cream border-2 border-brand-dark text-[11px] sm:text-sm font-extrabold text-brand-dark shadow-neo-sm max-w-full">
                     <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-accent animate-pulse shrink-0" />
-                    <span className="truncate">Kue sus termantep di SMAN 105 Jakarta! 🔥</span>
+                    <span className="truncate">Kue sus termantep di SMAN 105 Jakarta!</span>
                   </div>
 
                   <h1 className="font-heading text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-dark tracking-tight leading-tight">

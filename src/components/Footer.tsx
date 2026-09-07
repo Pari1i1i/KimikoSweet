@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { MascotChoux } from "./MascotChoux";
 import { Sparkles, ExternalLink } from "lucide-react";
 
@@ -33,12 +32,6 @@ export const Footer: React.FC = () => {
           <div className="px-3 py-1.5 rounded-neo-sm bg-brand-butter border-2 border-brand-dark shadow-neo-sm flex items-center gap-1.5">
             <span>Mulai Rp6.000 / pcs</span>
           </div>
-          <Link
-            href="/admin"
-            className="px-3 py-1.5 rounded-neo-sm bg-white border-2 border-brand-dark shadow-neo-sm hover:bg-brand-butter neo-btn-sm flex items-center gap-1.5 text-brand-dark cursor-pointer"
-          >
-            <span>👨‍🍳 Dapur Penjual (Admin)</span>
-          </Link>
         </div>
 
         {/* Mandatory Copyright Pari1i1i */}

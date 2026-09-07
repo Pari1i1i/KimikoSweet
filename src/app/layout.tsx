@@ -24,7 +24,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "KiMiko Sweets — Kue Sus Premium Neobrutalism Lucu",
+  title: "KiMiko Sweets",
   description:
     "Pesan kue sus aneka rasa favoritmu di KiMiko Sweets! Renyah di luar, lumer lezat di dalam. Pesan praktis & cek status pesananmu secara realtime.",
   authors: [{ name: "Pari1i1i", url: "https://github.com/Pari1i1i" }],
