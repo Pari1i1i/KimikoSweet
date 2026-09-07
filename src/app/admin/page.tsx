@@ -20,9 +20,11 @@ import {
   RefreshCw
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function AdminPageContent() {
   const { user, loading: authLoading, login, logout } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -48,13 +50,22 @@ function AdminPageContent() {
     } catch (err: unknown) {
       console.error(err);
       if (err instanceof Error) {
-        setErrorMsg(err.message);
+        if (err.message.includes("auth/invalid-credential") || err.message.includes("auth/wrong-password") || err.message.includes("auth/user-not-found")) {
+          setErrorMsg("Email atau Password salah. Periksa kembali akun di Firebase.");
+        } else {
+          setErrorMsg(err.message);
+        }
       } else {
         setErrorMsg("Email atau password salah.");
       }
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleLogoutClick = async () => {
+    await logout();
+    router.push("/");
   };
 
   if (authLoading) {
@@ -65,7 +76,7 @@ function AdminPageContent() {
     );
   }
 
-  // Jika Belum Login: Tampilkan Login Box Neobrutalism di halaman /admin
+  // JIKA BELUM LOGIN: Form Login Neobrutalism PASTI MUNCUL DI SINI
   if (!user) {
     return (
       <div className="min-h-screen bg-brand-bg flex flex-col justify-between">
@@ -89,7 +100,7 @@ function AdminPageContent() {
                 Dapur Penjual KiMiko
               </h2>
               <p className="text-xs text-brand-dark/80 font-medium mt-1">
-                Silakan masuk untuk mengelola pesanan, rekap produksi & keuangan live.
+                Silakan masuk dengan akun penjual untuk mengelola pesanan & produksi.
               </p>
             </div>
 
@@ -134,7 +145,7 @@ function AdminPageContent() {
                 className="w-full py-3 rounded-neo-sm bg-brand-accent text-white font-heading font-bold text-sm neo-btn flex items-center justify-center gap-2"
               >
                 {isLoggingIn ? (
-                  "Memproses..."
+                  "Memverifikasi..."
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
@@ -151,7 +162,7 @@ function AdminPageContent() {
     );
   }
 
-  // Jika Sudah Login: Tampilkan Dashboard Lengkap Penjual
+  // JIKA SUDAH LOGIN: Tampilkan Dashboard Lengkap Penjual
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col">
       {/* Admin Topbar */}
@@ -182,7 +193,7 @@ function AdminPageContent() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => logout()}
+              onClick={handleLogoutClick}
               className="px-3 py-1.5 rounded-neo-sm bg-white border-2 border-brand-dark text-xs font-bold neo-btn-sm flex items-center gap-1.5 text-brand-dark"
             >
               <LogOut className="w-3.5 h-3.5 text-red-500" />
