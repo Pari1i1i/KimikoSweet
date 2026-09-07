@@ -4,8 +4,6 @@ import {
   setDoc, 
   updateDoc, 
   onSnapshot, 
-  query, 
-  orderBy, 
   Unsubscribe 
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
@@ -54,19 +52,21 @@ export const dataService = {
   subscribeOrders(callback: (orders: Order[]) => void): Unsubscribe {
     if (isFirebaseConfigured) {
       try {
-        const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const colRef = collection(db, "orders");
         return onSnapshot(
-          q,
+          colRef,
           (snapshot) => {
             const list: Order[] = [];
             snapshot.forEach((docSnap) => {
-              list.push({ id: docSnap.id, ...docSnap.data() } as Order);
+              const data = docSnap.data();
+              list.push({ id: docSnap.id, ...data } as Order);
             });
+            // Urutkan createdAt terbaru di atas
+            list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             callback(list);
           },
           (err) => {
-            console.warn("Firestore error fallback to local:", err);
-            // Fallback to local
+            console.error("Firestore order listener error:", err);
             const local = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
             callback(local);
           }
@@ -105,60 +105,60 @@ export const dataService = {
   // CREATE ORDER
   async createOrder(orderData: Omit<Order, "id">): Promise<string> {
     const customId = "KMK-" + Math.floor(100000 + Math.random() * 900000);
+    const newOrderPayload: Order = { ...orderData, id: customId };
+
+    // Simpan ke local cache selalu agar instan tampil
+    const current = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
+    const updated = [newOrderPayload, ...current];
+    setLocalData(LOCAL_STORAGE_ORDERS_KEY, updated);
+    listeners.orders.forEach((l) => l(updated));
 
     if (isFirebaseConfigured) {
       try {
         const docRef = doc(db, "orders", customId);
-        await setDoc(docRef, { ...orderData, id: customId });
-        return customId;
+        await setDoc(docRef, newOrderPayload);
       } catch (err) {
-        console.warn("Firebase createOrder error, saving to local fallback:", err);
+        console.error("Firestore createOrder error:", err);
       }
     }
 
-    // Fallback Local
-    const current = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
-    const newOrder: Order = { ...orderData, id: customId };
-    const updated = [newOrder, ...current];
-    setLocalData(LOCAL_STORAGE_ORDERS_KEY, updated);
-    listeners.orders.forEach((l) => l(updated));
     return customId;
   },
 
   // UPDATE ORDER STATUS
   async updateOrderStatus(orderId: string, status: Order["status"]): Promise<void> {
-    if (isFirebaseConfigured) {
-      try {
-        const docRef = doc(db, "orders", orderId);
-        await updateDoc(docRef, { status });
-        return;
-      } catch (err) {
-        console.warn("Firebase updateOrderStatus fallback to local:", err);
-      }
-    }
-
     const current = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
     const updated = current.map((ord) => (ord.id === orderId ? { ...ord, status } : ord));
     setLocalData(LOCAL_STORAGE_ORDERS_KEY, updated);
     listeners.orders.forEach((l) => l(updated));
+
+    if (isFirebaseConfigured) {
+      try {
+        const docRef = doc(db, "orders", orderId);
+        await updateDoc(docRef, { status });
+      } catch (err) {
+        console.error("Firestore updateOrderStatus error:", err);
+      }
+    }
   },
 
   // SUBSCRIBE REVIEWS
   subscribeReviews(callback: (reviews: Review[]) => void): Unsubscribe {
     if (isFirebaseConfigured) {
       try {
-        const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+        const colRef = collection(db, "reviews");
         return onSnapshot(
-          q,
+          colRef,
           (snapshot) => {
             const list: Review[] = [];
             snapshot.forEach((docSnap) => {
               list.push({ id: docSnap.id, ...docSnap.data() } as Review);
             });
+            list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             callback(list.length > 0 ? list : INITIAL_REVIEWS);
           },
           (err) => {
-            console.warn("Firestore reviews error fallback to local:", err);
+            console.error("Firestore reviews error:", err);
             const local = getLocalData<Review[]>(LOCAL_STORAGE_REVIEWS_KEY, INITIAL_REVIEWS);
             callback(local);
           }
@@ -196,22 +196,22 @@ export const dataService = {
   // ADD REVIEW
   async addReview(reviewData: Omit<Review, "id">): Promise<string> {
     const revId = "rev-" + Date.now();
+    const newRevPayload: Review = { ...reviewData, id: revId };
+
+    const current = getLocalData<Review[]>(LOCAL_STORAGE_REVIEWS_KEY, INITIAL_REVIEWS);
+    const updated = [newRevPayload, ...current];
+    setLocalData(LOCAL_STORAGE_REVIEWS_KEY, updated);
+    listeners.reviews.forEach((l) => l(updated));
 
     if (isFirebaseConfigured) {
       try {
         const docRef = doc(db, "reviews", revId);
-        await setDoc(docRef, { ...reviewData, id: revId });
-        return revId;
+        await setDoc(docRef, newRevPayload);
       } catch (err) {
-        console.warn("Firebase addReview fallback to local:", err);
+        console.error("Firestore addReview error:", err);
       }
     }
 
-    const current = getLocalData<Review[]>(LOCAL_STORAGE_REVIEWS_KEY, INITIAL_REVIEWS);
-    const newRev: Review = { ...reviewData, id: revId };
-    const updated = [newRev, ...current];
-    setLocalData(LOCAL_STORAGE_REVIEWS_KEY, updated);
-    listeners.reviews.forEach((l) => l(updated));
     return revId;
   },
 
@@ -230,7 +230,7 @@ export const dataService = {
             }
           },
           (err) => {
-            console.warn("Firestore session error fallback to local:", err);
+            console.error("Firestore session error:", err);
             const local = getLocalData<IncomeSession | null>(LOCAL_STORAGE_SESSION_KEY, null);
             callback(local);
           }
@@ -275,18 +275,17 @@ export const dataService = {
       namaSesi,
     };
 
+    setLocalData(LOCAL_STORAGE_SESSION_KEY, session);
+    listeners.sessions.forEach((l) => l(session));
+
     if (isFirebaseConfigured) {
       try {
         const docRef = doc(db, "incomeSessions", "current_active_session");
         await setDoc(docRef, session);
-        return;
       } catch (err) {
-        console.warn("Firebase startNewSession fallback to local:", err);
+        console.error("Firestore startNewSession error:", err);
       }
     }
-
-    setLocalData(LOCAL_STORAGE_SESSION_KEY, session);
-    listeners.sessions.forEach((l) => l(session));
   },
 };
 
