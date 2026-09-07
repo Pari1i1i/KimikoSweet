@@ -7,8 +7,8 @@ import { ShoppingBag, Search, Sparkles, ChefHat } from "lucide-react";
 import { MascotChoux } from "./MascotChoux";
 
 interface NavbarProps {
-  activeTab?: "menu" | "status" | "reviews" | "admin";
-  setActiveTab?: (tab: "menu" | "status" | "reviews" | "admin") => void;
+  activeTab?: "menu" | "status" | "reviews";
+  setActiveTab?: (tab: "menu" | "status" | "reviews") => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab = "menu", setActiveTab }) => {

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { MascotChoux } from "./MascotChoux";
-import { Heart, Github, Sparkles, ExternalLink } from "lucide-react";
+import { Sparkles, ExternalLink, Code2 } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
@@ -43,7 +43,20 @@ export const Footer: React.FC = () => {
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border-2 border-brand-dark rounded-neo-sm shadow-neo-sm hover:bg-brand-butter neo-btn-sm text-xs font-bold transition-all text-brand-dark"
           >
-            <Github className="w-4 h-4 text-brand-dark group-hover:scale-110 transition-transform" />
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-brand-dark group-hover:scale-110 transition-transform"
+            >
+              <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+              <path d="M9 18c-4.51 2-5-2-7-2" />
+            </svg>
             <span>Created by <strong className="text-brand-accent">Pari1i1i</strong></span>
             <ExternalLink className="w-3 h-3 opacity-60" />
           </a>
@@ -55,3 +68,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/lib/AuthContext";
+import { AuthProvider, useAuth } from "@/lib/AuthContext";
+import { CartProvider } from "@/lib/CartContext";
 import { dataService } from "@/lib/dataService";
 import { Order } from "@/types";
 import { OrdersDatagrid } from "@/components/OrdersDatagrid";
@@ -23,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function AdminPage() {
+function AdminPageContent() {
   const { user, loading: authLoading, login, logout, isMockAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -248,5 +249,15 @@ export default function AdminPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <AdminPageContent />
+      </CartProvider>
+    </AuthProvider>
   );
 }
