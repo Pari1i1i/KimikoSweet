@@ -17,7 +17,7 @@ interface OrdersDatagridProps {
 }
 
 export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
-  const [filterHari, setFilterHari] = useState<string>("all");
+  const [filterTanggal, setFilterTanggal] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -56,15 +56,19 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
     }
   };
 
+  // Dapatkan daftar tanggal unik yang ada di pesanan (diurutkan)
+  const availableDates = Array.from(
+    new Set(
+      orders
+        .map((o) => o.tanggalPengambilan)
+        .filter((t): t is string => Boolean(t))
+    )
+  ).sort();
+
   const filteredOrders = orders.filter((ord) => {
     const matchStatus = filterStatus === "all" || ord.status === filterStatus;
-    const matchHari =
-      filterHari === "all" ||
-      ord.hariPengambilan === filterHari ||
-      (ord.tanggalPengambilan &&
-        (filterHari === "Senin"
-          ? new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 1
-          : new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 4));
+    const matchTanggal =
+      filterTanggal === "all" || ord.tanggalPengambilan === filterTanggal;
     const query = search.toLowerCase().trim();
     const matchSearch =
       !query ||
@@ -74,7 +78,7 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
       (ord.tanggalPengambilan && ord.tanggalPengambilan.includes(query)) ||
       (ord.hariPengambilan && ord.hariPengambilan.toLowerCase().includes(query)) ||
       ord.id.toLowerCase().includes(query);
-    return matchStatus && matchHari && matchSearch;
+    return matchStatus && matchTanggal && matchSearch;
   });
 
   return (
@@ -125,32 +129,36 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
             Selesai ({orders.filter((o) => o.status === "completed").length})
           </button>
 
-          {/* Filter Hari (Senin / Kamis) */}
+          {/* Filter Jadwal Tanggal Pengambilan */}
           <span className="text-brand-dark/30 font-bold px-1 hidden sm:inline">|</span>
           <button
-            onClick={() => setFilterHari("all")}
-            className={`px-2 py-1 rounded-neo-sm text-[11px] font-bold border ${
-              filterHari === "all" ? "bg-brand-cream border-brand-dark font-extrabold" : "bg-white border-brand-dark/40"
+            onClick={() => setFilterTanggal("all")}
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+              filterTanggal === "all"
+                ? "bg-brand-cream border-brand-dark font-extrabold shadow-neo-sm"
+                : "bg-white border-brand-dark/40 hover:bg-brand-cream/50"
             }`}
           >
-            Semua Hari
+            Semua Tanggal
           </button>
-          <button
-            onClick={() => setFilterHari("Senin")}
-            className={`px-2 py-1 rounded-neo-sm text-[11px] font-bold border ${
-              filterHari === "Senin" ? "bg-brand-pink border-brand-dark font-extrabold" : "bg-white border-brand-dark/40"
-            }`}
-          >
-            Senin
-          </button>
-          <button
-            onClick={() => setFilterHari("Kamis")}
-            className={`px-2 py-1 rounded-neo-sm text-[11px] font-bold border ${
-              filterHari === "Kamis" ? "bg-brand-butter border-brand-dark font-extrabold" : "bg-white border-brand-dark/40"
-            }`}
-          >
-            Kamis
-          </button>
+
+          {availableDates.map((tgl) => (
+            <button
+              key={tgl}
+              onClick={() => setFilterTanggal(tgl)}
+              className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all flex items-center gap-1 ${
+                filterTanggal === tgl
+                  ? "bg-brand-butter text-brand-dark font-extrabold shadow-neo-sm"
+                  : "bg-white text-brand-dark hover:bg-brand-butter/40"
+              }`}
+            >
+              <span>📅</span>
+              <span>{formatTanggalPengambilan(tgl)}</span>
+              <span className="text-[10px] bg-brand-dark text-white px-1.5 rounded-full">
+                {orders.filter((o) => o.tanggalPengambilan === tgl).length}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* Search */}

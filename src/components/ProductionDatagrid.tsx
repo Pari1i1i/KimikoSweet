@@ -29,6 +29,7 @@ interface ProductionSummary {
 const LOCAL_PRODUCTION_DONE_PCS_KEY = "kimiko_production_done_pcs_map";
 
 export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }) => {
+  const [filterTanggal, setFilterTanggal] = useState<string>("all");
   // Map variantNama -> jumlah pcs yang sudah dibuat secara bertahap
   const [completedPcsMap, setCompletedPcsMap] = useState<Record<string, number>>({});
 
@@ -54,6 +55,36 @@ export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }
     setCompletedPcsMap(updated);
     localStorage.setItem(LOCAL_PRODUCTION_DONE_PCS_KEY, JSON.stringify(updated));
   };
+
+  // Dapatkan daftar tanggal unik yang ada di pesanan (diurutkan)
+  const availableDates = Array.from(
+    new Set(
+      orders
+        .map((o) => o.tanggalPengambilan)
+        .filter((t): t is string => Boolean(t))
+    )
+  ).sort();
+
+  const formatTanggalIndo = (tanggalStr?: string) => {
+    if (!tanggalStr) return "Semua Tanggal";
+    try {
+      const dt = new Date(tanggalStr + "T00:00:00");
+      const dayName = dt.getDay() === 4 ? "Kamis" : "Senin";
+      const formatted = dt.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
+      return `${dayName}, ${formatted}`;
+    } catch {
+      return tanggalStr;
+    }
+  };
+
+  // Filter orders berdasarkan tanggal yang dipilih
+  const filteredOrders = orders.filter((ord) => {
+    if (filterTanggal === "all") return true;
+    return ord.tanggalPengambilan === filterTanggal;
+  });
 
   // 1. Klik Tombol Kanan: Kurangi 1 pcs yang harus dibuat
   const handleIncrementDoneOne = (variantNama: string, totalGrossQty: number) => {
@@ -89,13 +120,13 @@ export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }
     }
   };
 
-  // Kalkulasi total pcs yang harus dibuat dari semua pesanan aktif (pending & confirmed)
+  // Kalkulasi total pcs yang harus dibuat dari pesanan aktif (pending & confirmed) sesuai filter tanggal
   const productionSummary: ProductionSummary[] = PRODUCTS_DATA.map((prod) => {
     let totalPendingQty = 0;
     let totalConfirmedQty = 0;
     let totalCompletedQty = 0;
 
-    orders.forEach((order) => {
+    filteredOrders.forEach((order) => {
       const matchedItem = order.items.find(
         (it) => it.namaVarian.toLowerCase() === prod.nama.toLowerCase()
       );
@@ -136,34 +167,76 @@ export const ProductionDatagrid: React.FC<ProductionDatagridProps> = ({ orders }
 
   return (
     <div className="space-y-4">
-      {/* Header Info Banner */}
-      <div className="p-4 rounded-neo bg-brand-cream border-2 border-brand-dark flex flex-col sm:flex-row items-center justify-between gap-3 shadow-neo-sm">
-        <div className="flex items-center gap-3 text-center sm:text-left">
-          <div className="w-10 h-10 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center font-bold text-sm shrink-0">
-            <Layers className="w-5 h-5 text-brand-dark" />
+      {/* Header Info Banner & Date Filter */}
+      <div className="p-4 rounded-neo bg-brand-cream border-2 border-brand-dark flex flex-col gap-3 shadow-neo-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <div className="w-10 h-10 rounded-neo-sm bg-brand-butter border-2 border-brand-dark flex items-center justify-center font-bold text-sm shrink-0">
+              <Layers className="w-5 h-5 text-brand-dark" />
+            </div>
+            <div>
+              <h4 className="font-heading font-bold text-base text-brand-dark">
+                Total Produksi per Varian
+              </h4>
+              <p className="text-xs text-brand-dark/70 font-medium">
+                Pilih tanggal pembuatan untuk memfilter produksi sesuai jadwal antar/ambil pesanan.
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-heading font-bold text-base text-brand-dark">
-              Total Produksi per Varian
-            </h4>
-            <p className="text-xs text-brand-dark/70 font-medium">
-              Klik tombol ✓ untuk selesaikan 1 pcs, atau Swipe/Geser baris untuk selesaikan langsung semuanya!
-            </p>
+
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1.5 rounded-neo-sm bg-brand-butter border-2 border-brand-dark text-xs font-bold text-brand-dark shadow-neo-sm">
+              Sisa Buat: <span className="text-brand-accent font-extrabold">{grandTotalRemaining} pcs</span>
+            </div>
+            <button
+              onClick={resetAllProduction}
+              className="p-1.5 rounded-neo-sm bg-white border-2 border-brand-dark hover:bg-brand-pink neo-btn-sm text-xs font-bold flex items-center gap-1"
+              title="Reset Ceklis Produksi"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Reset Ceklis</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 rounded-neo-sm bg-brand-butter border-2 border-brand-dark text-xs font-bold text-brand-dark shadow-neo-sm">
-            Sisa Buat: <span className="text-brand-accent font-extrabold">{grandTotalRemaining} pcs</span>
-          </div>
+        {/* Date Filter Pills for Production */}
+        <div className="border-t border-brand-dark/20 pt-2.5 flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-extrabold text-brand-dark uppercase tracking-wider mr-1">
+            Filter Tanggal:
+          </span>
+
           <button
-            onClick={resetAllProduction}
-            className="p-1.5 rounded-neo-sm bg-white border-2 border-brand-dark hover:bg-brand-pink neo-btn-sm text-xs font-bold flex items-center gap-1"
-            title="Reset Ceklis Produksi"
+            onClick={() => setFilterTanggal("all")}
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+              filterTanggal === "all"
+                ? "bg-brand-dark text-white shadow-neo-sm"
+                : "bg-white hover:bg-brand-cream"
+            }`}
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Reset Semua</span>
+            Semua Tanggal ({orders.length} Order)
           </button>
+
+          {availableDates.map((tgl) => {
+            const countForDate = orders.filter((o) => o.tanggalPengambilan === tgl).length;
+            return (
+              <button
+                key={tgl}
+                onClick={() => setFilterTanggal(tgl)}
+                className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all flex items-center gap-1.5 ${
+                  filterTanggal === tgl
+                    ? "bg-brand-accent text-white font-extrabold shadow-neo-sm"
+                    : "bg-white text-brand-dark hover:bg-brand-pink/40"
+                }`}
+              >
+                <span>📅 {formatTanggalIndo(tgl)}</span>
+                <span className={`text-[10px] px-1.5 rounded-full font-bold ${
+                  filterTanggal === tgl ? "bg-white text-brand-accent" : "bg-brand-dark text-white"
+                }`}>
+                  {countForDate}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
