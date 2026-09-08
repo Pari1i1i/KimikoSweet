@@ -28,6 +28,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# firebase credentials (gunakan firebase.example.ts sebagai template)
+src/lib/firebase.ts
+
 # vercel
 .vercel
 
