@@ -30,6 +30,7 @@ yarn-error.log*
 
 # firebase credentials (gunakan firebase.example.ts sebagai template)
 src/lib/firebase.ts
+.firebaserc
 
 # vercel
 .vercel
