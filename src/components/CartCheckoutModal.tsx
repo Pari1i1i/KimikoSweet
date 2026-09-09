@@ -422,7 +422,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
                 <label htmlFor="anonimCheckbox" className="text-xs text-brand-dark cursor-pointer select-none">
                   <span className="font-bold block">Pesan sebagai Anonim</span>
                   <span className="text-[11px] text-brand-dark/70 font-medium">
-                    Jika dicentang, nama kamu tetap tampil di cek pesanan namun catatan khusus kamu disamarkan (&lsquo;-&rsquo;) untuk publik dan hanya bisa dibaca oleh admin.
+                    Jika dicentang, seluruh data pesanan kamu (nama, kelas, detail varian, catatan, dsb.) akan disamarkan di halaman publik dan hanya bisa dilihat secara lengkap oleh admin.
                   </span>
                 </label>
               </div>

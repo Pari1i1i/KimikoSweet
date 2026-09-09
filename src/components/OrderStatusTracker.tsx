@@ -150,10 +150,19 @@ export const OrderStatusTracker: React.FC = () => {
                 <div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <h4 className="font-heading font-extrabold text-base text-brand-dark">
-                      {ord.namaPembeli}
+                      {ord.isAnonim ? (
+                        <span className="flex items-center gap-1.5">
+                          <span>Sobat Manis</span>
+                          <span className="neo-badge text-[9px] bg-brand-dark text-white px-1.5 py-0.2 rounded font-extrabold">
+                            Anonim
+                          </span>
+                        </span>
+                      ) : (
+                        ord.namaPembeli
+                      )}
                     </h4>
                     <span className="neo-badge text-[10px] px-2 py-0.5 rounded-md bg-brand-cream text-brand-dark">
-                      {ord.kelas}
+                      {ord.isAnonim ? "-" : ord.kelas}
                     </span>
                     <span className="neo-badge text-[10px] px-2 py-0.5 rounded-md bg-brand-butter text-brand-dark font-extrabold">
                       {formatTanggalIndo(ord.tanggalPengambilan, ord.hariPengambilan)}
@@ -171,19 +180,25 @@ export const OrderStatusTracker: React.FC = () => {
                 <p className="text-[11px] font-bold text-brand-dark/60 uppercase tracking-wider">
                   Menu Dipesan:
                 </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ord.items.map((it, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2.5 py-1 rounded-neo-sm bg-brand-pink/40 border border-brand-dark text-xs font-bold text-brand-dark flex items-center gap-1"
-                    >
-                      <span>{it.namaVarian}</span>
-                      <span className="bg-brand-dark text-white text-[10px] px-1.5 rounded-full">
-                        x{it.qty}
+                {ord.isAnonim ? (
+                  <div className="flex items-center gap-1 text-xs font-bold text-brand-dark/70 bg-brand-pink/20 px-2.5 py-1.5 rounded-neo-sm border border-brand-dark/30">
+                    <span>🥟 {ord.totalPcs || ord.items?.reduce((a, b) => a + b.qty, 0) || 0} pcs kue sus (Detail varian disamarkan)</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {ord.items.map((it, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 rounded-neo-sm bg-brand-pink/40 border border-brand-dark text-xs font-bold text-brand-dark flex items-center gap-1"
+                      >
+                        <span>{it.namaVarian}</span>
+                        <span className="bg-brand-dark text-white text-[10px] px-1.5 rounded-full">
+                          x{it.qty}
+                        </span>
                       </span>
-                    </span>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {ord.isAnonim ? (
@@ -202,7 +217,9 @@ export const OrderStatusTracker: React.FC = () => {
               {/* Footer Details */}
               <div className="border-t-2 border-brand-dark/10 pt-3 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 font-bold text-brand-dark/80">
-                  {ord.metodeBayar === "qris" ? (
+                  {ord.isAnonim ? (
+                    <span className="text-brand-dark/60 font-semibold text-[11px]">-</span>
+                  ) : ord.metodeBayar === "qris" ? (
                     <>
                       <QrCode className="w-3.5 h-3.5 text-brand-accent" />
                       <span>QRIS Offline</span>
