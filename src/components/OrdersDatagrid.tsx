@@ -11,7 +11,10 @@ import {
   Banknote, 
   MessageSquare, 
   Calendar, 
-  X 
+  X,
+  Trash2,
+  XCircle,
+  AlertOctagon
 } from "lucide-react";
 
 interface OrdersDatagridProps {
@@ -30,6 +33,11 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
   const [rescheduleNoteInput, setRescheduleNoteInput] = useState("");
   const [isRescheduling, setIsRescheduling] = useState(false);
 
+  // State untuk Tolak Modal
+  const [rejectOrderModal, setRejectOrderModal] = useState<Order | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("Mohon maaf, pesanan tidak dapat diproses (stok habis / kuota penuh).");
+  const [isRejecting, setIsRejecting] = useState(false);
+
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -46,6 +54,41 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
       console.error(e);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    if (confirm(`Hapus permanen pesanan ${order.id} atas nama "${order.namaPembeli}"? Data akan dihapus dari sistem dan tidak dapat dikembalikan.`)) {
+      setUpdatingId(order.id);
+      try {
+        await dataService.deleteOrder(order.id);
+      } catch (e) {
+        console.error("Delete order error:", e);
+        alert("Gagal menghapus pesanan.");
+      } finally {
+        setUpdatingId(null);
+      }
+    }
+  };
+
+  const handleOpenReject = (ord: Order) => {
+    setRejectOrderModal(ord);
+    setRejectReasonInput("Mohon maaf, pesanan tidak dapat diproses (stok habis / kuota penuh).");
+  };
+
+  const handleSubmitReject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectOrderModal) return;
+    setIsRejecting(true);
+    try {
+      await dataService.rejectOrder(rejectOrderModal.id, rejectReasonInput.trim());
+      setRejectOrderModal(null);
+      setRejectReasonInput("");
+    } catch (err) {
+      console.error("Reject order error:", err);
+      alert("Gagal menolak pesanan.");
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -180,6 +223,16 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
             }`}
           >
             Selesai ({orders.filter((o) => o.status === "completed").length})
+          </button>
+          <button
+            onClick={() => setFilterStatus("rejected")}
+            className={`px-2.5 py-1 rounded-neo-sm text-xs font-bold border-2 border-brand-dark transition-all ${
+              filterStatus === "rejected"
+                ? "bg-red-300 text-brand-dark shadow-neo-sm"
+                : "bg-brand-bg hover:bg-red-100"
+            }`}
+          >
+            Ditolak ({orders.filter((o) => o.status === "rejected").length})
           </button>
 
           {/* Filter Jadwal Tanggal Pengambilan */}
@@ -410,34 +463,73 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                           Selesai
                         </span>
                       )}
+                      {ord.status === "rejected" && (
+                        <span className="px-2 py-0.5 rounded-full bg-red-200 text-red-950 text-[10px] font-extrabold border border-brand-dark block text-center">
+                          Ditolak
+                        </span>
+                      )}
                     </td>
 
                     {/* Action buttons */}
                     <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        {/* 1. Tombol Khusus Status Pending: Konfirmasi & Tolak */}
                         {ord.status === "pending" && (
-                          <button
-                            onClick={() => handleUpdateStatus(ord.id, "confirmed")}
-                            disabled={updatingId === ord.id}
-                            className="px-2.5 py-1 rounded-neo-sm bg-brand-butter text-brand-dark font-heading font-bold text-xs neo-btn-sm hover:bg-brand-butter/80"
-                          >
-                            ✓ Konfirmasi
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(ord.id, "confirmed")}
+                              disabled={updatingId === ord.id}
+                              className="px-2.5 py-1 rounded-neo-sm bg-brand-butter text-brand-dark font-heading font-bold text-xs neo-btn-sm hover:bg-brand-butter/80"
+                              title="Konfirmasi Pesanan"
+                            >
+                              ✓ Konfirmasi
+                            </button>
+                            <button
+                              onClick={() => handleOpenReject(ord)}
+                              disabled={updatingId === ord.id}
+                              className="px-2.5 py-1 rounded-neo-sm bg-red-200 text-red-950 font-heading font-bold text-xs neo-btn-sm hover:bg-red-300 border border-brand-dark"
+                              title="Tolak Pesanan Ini"
+                            >
+                              ✕ Tolak
+                            </button>
+                          </>
                         )}
+
+                        {/* 2. Tombol Khusus Status Confirmed: Selesaikan (TIDAK BISA DITOLAK LAGI) */}
                         {ord.status === "confirmed" && (
                           <button
                             onClick={() => handleUpdateStatus(ord.id, "completed")}
                             disabled={updatingId === ord.id}
                             className="px-2.5 py-1 rounded-neo-sm bg-green-400 text-brand-dark font-heading font-bold text-xs neo-btn-sm hover:bg-green-500"
+                            title="Selesaikan Pesanan"
                           >
                             ✓ Selesai
                           </button>
                         )}
+
+                        {/* 3. Status Completed */}
                         {ord.status === "completed" && (
                           <span className="text-[11px] font-bold text-green-700 flex items-center gap-1">
                             <CheckCheck className="w-3.5 h-3.5" /> Beres
                           </span>
                         )}
+
+                        {/* 4. Status Rejected */}
+                        {ord.status === "rejected" && (
+                          <span className="text-[11px] font-bold text-red-700 flex items-center gap-1">
+                            <XCircle className="w-3.5 h-3.5" /> Ditolak
+                          </span>
+                        )}
+
+                        {/* 5. Tombol HAPUS PERMANEN (SELALU BISA DIGUNAKAN DI SEMUA STATUS) */}
+                        <button
+                          onClick={() => handleDeleteOrder(ord)}
+                          disabled={updatingId === ord.id}
+                          className="p-1 rounded-neo-sm bg-white border border-red-500 text-red-600 hover:bg-red-50 neo-btn-sm transition-all"
+                          title="Hapus Permanen Pesanan"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -533,6 +625,77 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                   className="w-2/3 py-2.5 rounded-neo-sm bg-brand-accent text-white font-heading font-bold text-xs neo-btn disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {isRescheduling ? "Menyimpan..." : "Simpan Jadwal Baru"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TOLAK PESANAN OLEH ADMIN */}
+      {rejectOrderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/65 backdrop-blur-sm animate-fade-in">
+          <div className="bg-brand-bg w-full max-w-md rounded-neo-lg border-neo-thick border-brand-dark shadow-neo-xl overflow-hidden animate-scale-up">
+            <div className="p-4 bg-red-300 border-b-neo border-brand-dark flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white border-2 border-brand-dark flex items-center justify-center shadow-neo-sm">
+                  <AlertOctagon className="w-4 h-4 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-extrabold text-base text-brand-dark">
+                    Tolak Pesanan Pembeli
+                  </h3>
+                  <p className="text-[10px] font-semibold text-brand-dark/70">
+                    ID: {rejectOrderModal.id} • {rejectOrderModal.namaPembeli}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRejectOrderModal(null)}
+                className="w-7 h-7 rounded-neo-sm bg-white border-2 border-brand-dark flex items-center justify-center hover:bg-brand-pink neo-btn-sm"
+              >
+                <X className="w-4 h-4 text-brand-dark" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitReject} className="p-5 space-y-4 bg-white">
+              <div className="p-3 bg-red-50 rounded-neo-sm border-2 border-red-400 text-xs text-red-950 space-y-1">
+                <p className="font-bold">
+                  Yakin ingin menolak pesanan dari {rejectOrderModal.namaPembeli} ({rejectOrderModal.kelas})?
+                </p>
+                <p className="text-[11px] text-red-800">
+                  Total {rejectOrderModal.totalPcs} pcs ({formatRupiah(rejectOrderModal.totalHarga)}). Status di tracker pembeli akan berubah menjadi Ditolak.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1">
+                  Alasan Penolakan (Ditampilkan ke Pembeli)
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={rejectReasonInput}
+                  onChange={(e) => setRejectReasonInput(e.target.value)}
+                  placeholder="Misal: Mohon maaf, kuota varian Matcha hari ini sudah habis."
+                  className="w-full px-3 py-2 rounded-neo-sm neo-input text-xs font-medium bg-brand-bg text-brand-dark resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectOrderModal(null)}
+                  className="w-1/3 py-2.5 rounded-neo-sm bg-brand-bg border-2 border-brand-dark text-xs font-bold neo-btn-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRejecting || !rejectReasonInput.trim()}
+                  className="w-2/3 py-2.5 rounded-neo-sm bg-red-500 text-white font-heading font-bold text-xs neo-btn disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {isRejecting ? "Memproses..." : "✕ Konfirmasi Tolak"}
                 </button>
               </div>
             </form>

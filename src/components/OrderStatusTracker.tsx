@@ -86,6 +86,12 @@ export const OrderStatusTracker: React.FC = () => {
             Selesai / Siap Diambil
           </span>
         );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-300 border-2 border-brand-dark text-xs font-extrabold text-red-950 shadow-neo-sm">
+            ✕ Pesanan Ditolak
+          </span>
+        );
     }
   };
 
@@ -186,6 +192,21 @@ export const OrderStatusTracker: React.FC = () => {
                     <p className="text-[11px] text-purple-900/90 mt-0.5">
                       Diubah menjadi <strong>{formatTanggalIndo(ord.tanggalPengambilan, ord.hariPengambilan)}</strong>.
                       {ord.rescheduleNotes && ` (${ord.rescheduleNotes})`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Alert jika Pesanan Ditolak oleh Penjual */}
+              {ord.status === "rejected" && (
+                <div className="p-2.5 rounded-neo-sm bg-red-100 border-2 border-red-600 text-red-950 text-xs font-semibold flex items-start gap-2 shadow-neo-sm">
+                  <span className="text-base leading-none mt-0.5">✕</span>
+                  <div>
+                    <span className="font-heading font-bold text-red-900 block">
+                      Pesanan Ini Ditolak oleh Penjual
+                    </span>
+                    <p className="text-[11px] text-red-900/90 mt-0.5">
+                      {ord.rejectedReason || "Mohon maaf, pesanan tidak dapat diproses (stok habis / jadwal penuh)."}
                     </p>
                   </div>
                 </div>

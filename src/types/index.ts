@@ -1,5 +1,5 @@
 export type PaymentMethod = "qris" | "cash";
-export type OrderStatus = "pending" | "confirmed" | "completed";
+export type OrderStatus = "pending" | "confirmed" | "completed" | "rejected";
 export type HariPengambilan = "Senin" | "Kamis";
 
 export interface OrderItem {
@@ -34,6 +34,7 @@ export interface Order {
   isAnonim?: boolean;
   isRescheduled?: boolean;
   rescheduleNotes?: string;
+  rejectedReason?: string;
   status: OrderStatus;
   createdAt: number; // timestamp ms
 }

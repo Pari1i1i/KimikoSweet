@@ -251,9 +251,13 @@ export const dataService = {
   },
 
   // UPDATE ORDER STATUS
-  async updateOrderStatus(orderId: string, status: Order["status"]): Promise<void> {
+  async updateOrderStatus(orderId: string, status: Order["status"], rejectedReason?: string): Promise<void> {
     const current = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
-    const updated = current.map((ord) => (ord.id === orderId ? { ...ord, status } : ord));
+    const updated = current.map((ord) => 
+      ord.id === orderId 
+        ? { ...ord, status, rejectedReason: rejectedReason !== undefined ? rejectedReason : ord.rejectedReason } 
+        : ord
+    );
     setLocalData(LOCAL_STORAGE_ORDERS_KEY, updated);
     listeners.orders.forEach((l) => l(updated));
     broadcastEvent("ORDERS_UPDATED");
@@ -261,9 +265,36 @@ export const dataService = {
     if (isFirebaseConfigured) {
       try {
         const docRef = doc(db, "orders", orderId);
-        await updateDoc(docRef, { status });
+        const updatePayload: Record<string, unknown> = { status };
+        if (rejectedReason) {
+          updatePayload.rejectedReason = rejectedReason;
+        }
+        await updateDoc(docRef, updatePayload);
       } catch (err) {
         console.warn("Firestore updateOrderStatus failed (updated in local storage):", err);
+      }
+    }
+  },
+
+  // REJECT ORDER (KHUSUS STATUS PENDING)
+  async rejectOrder(orderId: string, rejectedReason?: string): Promise<void> {
+    return this.updateOrderStatus(orderId, "rejected", rejectedReason || "Pesanan ditolak oleh penjual");
+  },
+
+  // DELETE ORDER (HAPUS PERMANEN ORDER OLEH ADMIN)
+  async deleteOrder(orderId: string): Promise<void> {
+    const current = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
+    const updated = current.filter((ord) => ord.id !== orderId);
+    setLocalData(LOCAL_STORAGE_ORDERS_KEY, updated);
+    listeners.orders.forEach((l) => l(updated));
+    broadcastEvent("ORDERS_UPDATED");
+
+    if (isFirebaseConfigured) {
+      try {
+        const docRef = doc(db, "orders", orderId);
+        await deleteDoc(docRef);
+      } catch (err) {
+        console.warn("Firestore deleteOrder failed (deleted in local storage):", err);
       }
     }
   },
