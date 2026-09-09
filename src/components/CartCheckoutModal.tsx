@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "@/lib/CartContext";
-import { dataService } from "@/lib/dataService";
-import { PaymentMethod } from "@/types";
+import { dataService, getDefaultUpcomingPickupDates } from "@/lib/dataService";
+import { PaymentMethod, StoreSettings } from "@/types";
 import { MascotChoux } from "./MascotChoux";
 import { PastryIllustration } from "./PastryIllustration";
 import confetti from "canvas-confetti";
@@ -17,10 +17,11 @@ import {
   Banknote, 
   Sparkles, 
   CheckCircle2, 
-  ArrowRight,
-  ClipboardCopy,
-  Info,
-  Calendar
+  ArrowRight, 
+  ClipboardCopy, 
+  Info, 
+  Calendar, 
+  AlertTriangle 
 } from "lucide-react";
 
 interface CartCheckoutModalProps {
@@ -43,25 +44,34 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
   const [namaPembeli, setNamaPembeli] = useState("");
   const [kelas, setKelas] = useState("");
   const [noTelepon, setNoTelepon] = useState("");
-  const [tanggalPengambilan, setTanggalPengambilan] = useState(() => {
-    // Default cari tanggal Senin atau Kamis terdekat hari ini / ke depan
-    const now = new Date();
-    const d = new Date(now);
-    for (let i = 0; i < 7; i++) {
-      const day = d.getDay();
-      if (day === 1 || day === 4) { // 1 = Senin, 4 = Kamis
-        return d.toISOString().split("T")[0];
-      }
-      d.setDate(d.getDate() + 1);
-    }
-    return "";
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    isOpen: true,
+    closedReason: "Dapur KiMiko Sweets sedang tutup sementara / kuota pesanan penuh.",
+    activePickupDates: getDefaultUpcomingPickupDates(),
   });
+  const [tanggalPengambilan, setTanggalPengambilan] = useState("");
   const [notes, setNotes] = useState("");
   const [isAnonim, setIsAnonim] = useState(false);
   const [metodeBayar, setMetodeBayar] = useState<PaymentMethod>("qris");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastOrderId, setLastOrderId] = useState("");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const unsub = dataService.subscribeStoreSettings((sett) => {
+      setStoreSettings(sett);
+      // Jika tanggal pengambilan belum dipilih atau tidak ada di activePickupDates, pilih tanggal pertama yang tersedia
+      if (sett.activePickupDates && sett.activePickupDates.length > 0) {
+        setTanggalPengambilan((curr) => {
+          if (!curr || !sett.activePickupDates.includes(curr)) {
+            return sett.activePickupDates[0];
+          }
+          return curr;
+        });
+      }
+    });
+    return () => unsub();
+  }, []);
 
   if (!isCartOpen) return null;
 
@@ -85,8 +95,27 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
     }
   };
 
+  const formatTanggalIndo = (tanggalStr: string) => {
+    try {
+      const dt = new Date(tanggalStr + "T00:00:00");
+      const dayName = dt.getDay() === 4 ? "Kamis" : "Senin";
+      const formatted = dt.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      return `${dayName}, ${formatted}`;
+    } catch {
+      return tanggalStr;
+    }
+  };
+
   const handleProceedCheckout = () => {
     if (items.length === 0) return;
+    if (!storeSettings.isOpen) {
+      alert(`⚠️ Maaf, pemesanan sedang ditutup: ${storeSettings.closedReason || "Dapur sedang istirahat"}`);
+      return;
+    }
     setStep("checkout");
   };
 
@@ -103,6 +132,11 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!storeSettings.isOpen) {
+      alert(`⚠️ Maaf, pemesanan sedang ditutup: ${storeSettings.closedReason || "Dapur sedang istirahat"}`);
+      return;
+    }
+
     if (!namaPembeli.trim() || !kelas.trim()) {
       alert("Mohon lengkapi Nama Pembeli dan Kelas kamu ya!");
       return;
@@ -201,7 +235,22 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
         <div className="p-4 sm:p-5 overflow-y-auto flex-1">
           {/* STEP 1: CART LIST */}
           {step === "cart" && (
-            <div>
+            <div className="space-y-4">
+              {/* Alert jika toko sedang tutup */}
+              {!storeSettings.isOpen && (
+                <div className="p-3.5 rounded-neo-sm bg-red-100 border-2 border-red-500 text-red-950 flex items-start gap-2.5 shadow-neo-sm">
+                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-heading font-extrabold text-xs sm:text-sm text-red-900">
+                      Dapur Sedang Tutup Sementara 🔒
+                    </h4>
+                    <p className="text-xs text-red-800/90 mt-0.5">
+                      {storeSettings.closedReason || "Saat ini kami belum menerima pesanan baru. Silakan cek kembali nanti ya!"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {items.length === 0 ? (
                 <div className="py-8 flex flex-col items-center justify-center text-center">
                   <MascotChoux pose="empty" size={120} />
@@ -300,13 +349,28 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
           {/* STEP 2: CHECKOUT FORM */}
           {step === "checkout" && (
             <form onSubmit={handleSubmitOrder} className="space-y-4">
-              {/* Alert Info Offline */}
-              <div className="p-3 rounded-neo-sm border-2 border-brand-dark bg-brand-cream text-xs font-medium text-brand-dark flex items-start gap-2">
-                <Info className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
-                <p>
-                  <strong>Pemesanan Offline:</strong> Pembayaran dilakukan langsung di tempat (tunai atau scan QRIS fisik di kantin/outlet).
-                </p>
-              </div>
+              {/* Alert jika toko sedang tutup */}
+              {!storeSettings.isOpen ? (
+                <div className="p-3.5 rounded-neo-sm bg-red-100 border-2 border-red-500 text-red-950 flex items-start gap-2.5 shadow-neo-sm">
+                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-heading font-extrabold text-xs sm:text-sm text-red-900">
+                      Pemesanan Sedang Ditutup
+                    </h4>
+                    <p className="text-xs text-red-800/90 mt-0.5">
+                      {storeSettings.closedReason || "Saat ini toko sedang tutup sementara."}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Alert Info Offline */
+                <div className="p-3 rounded-neo-sm border-2 border-brand-dark bg-brand-cream text-xs font-medium text-brand-dark flex items-start gap-2">
+                  <Info className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
+                  <p>
+                    <strong>Pemesanan Offline:</strong> Pembayaran dilakukan langsung di tempat (tunai atau scan QRIS fisik di kantin/outlet).
+                  </p>
+                </div>
+              )}
 
               {/* Form Input: Nama */}
               <div>
@@ -353,7 +417,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
                 />
               </div>
 
-              {/* Form Input: Tanggal Pengambilan (HANYA SENIN & KAMIS) */}
+              {/* Form Input: Tanggal Pengambilan (HANYA DARI JADWAL BUKA ADMIN) */}
               <div>
                 <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
@@ -361,37 +425,41 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
                     <span>Pilih Tanggal Pengambilan <span className="text-brand-accent">*</span></span>
                   </span>
                   <span className="text-[10px] font-extrabold text-brand-accent bg-brand-pink/50 px-2 py-0.5 rounded-full border border-brand-dark/20">
-                    Khusus Senin & Kamis
+                    Sesuai Jadwal Buka
                   </span>
                 </label>
 
-                <input
-                  type="date"
-                  required
-                  value={tanggalPengambilan}
-                  onChange={(e) => {
-                    const chosen = e.target.value;
-                    const day = getDayName(chosen);
-                    if (chosen && !day) {
-                      alert("⚠️ KiMiko Sweets hanya melayani pengambilan di hari SENIN atau KAMIS. Silakan pilih tanggal yang jatuh pada hari Senin atau Kamis ya!");
-                    }
-                    setTanggalPengambilan(chosen);
-                  }}
-                  className="w-full px-3 py-2 rounded-neo-sm neo-input bg-white text-sm font-bold text-brand-dark cursor-pointer"
-                />
-
-                {/* Status Validasi Tanggal Terpilih */}
-                {tanggalPengambilan && (
-                  <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                    {getDayName(tanggalPengambilan) ? (
-                      <span className="inline-flex items-center gap-1 font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded border border-green-600">
-                        ✓ Terpilih: Hari {getDayName(tanggalPengambilan)}, {new Date(tanggalPengambilan + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded border border-red-500 text-[11px]">
-                        ⚠️ Tanggal ini bukan hari Senin atau Kamis. Silakan ganti tanggal.
-                      </span>
-                    )}
+                {storeSettings.activePickupDates && storeSettings.activePickupDates.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {storeSettings.activePickupDates.map((dateStr) => {
+                      const isSelected = tanggalPengambilan === dateStr;
+                      return (
+                        <button
+                          key={dateStr}
+                          type="button"
+                          onClick={() => setTanggalPengambilan(dateStr)}
+                          className={`p-2.5 rounded-neo-sm border-2 border-brand-dark text-left transition-all flex items-center justify-between ${
+                            isSelected
+                              ? "bg-brand-butter text-brand-dark shadow-neo-sm font-extrabold"
+                              : "bg-white text-brand-dark hover:bg-brand-pink/30 font-semibold"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">📅</span>
+                            <span className="text-xs">{formatTanggalIndo(dateStr)}</span>
+                          </div>
+                          {isSelected && (
+                            <span className="text-[10px] bg-brand-dark text-white px-2 py-0.5 rounded-full font-bold">
+                              Dipilih
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-red-50 border-2 border-red-500 rounded-neo-sm text-xs font-bold text-red-800">
+                    ⚠️ Penjual belum membuka jadwal tanggal pengambilan. Silakan hubungi admin atau cek kembali nanti.
                   </div>
                 )}
               </div>
@@ -498,11 +566,13 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !storeSettings.isOpen || !tanggalPengambilan}
                   className="w-2/3 py-2.5 rounded-neo-sm bg-brand-accent text-white font-heading font-bold text-sm neo-btn disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     "Mengirim Pesanan..."
+                  ) : !storeSettings.isOpen ? (
+                    "Toko Sedang Tutup"
                   ) : (
                     <>
                       <span>Pesan Sekarang</span>
@@ -591,9 +661,14 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({ onOrderSuc
             </div>
             <button
               onClick={handleProceedCheckout}
-              className="px-5 py-2.5 rounded-neo-sm bg-brand-accent text-white font-heading font-bold text-sm neo-btn flex items-center gap-2"
+              disabled={!storeSettings.isOpen}
+              className={`px-5 py-2.5 rounded-neo-sm font-heading font-bold text-sm neo-btn flex items-center gap-2 ${
+                !storeSettings.isOpen
+                  ? "bg-gray-400 text-white cursor-not-allowed opacity-75"
+                  : "bg-brand-accent text-white"
+              }`}
             >
-              <span>Lanjut Checkout</span>
+              <span>{storeSettings.isOpen ? "Lanjut Checkout" : "Toko Sedang Tutup"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

@@ -175,6 +175,22 @@ export const OrderStatusTracker: React.FC = () => {
                 <div className="shrink-0">{getStatusBadge(ord.status)}</div>
               </div>
 
+              {/* Alert jika Pesanan telah Di-reschedule oleh Penjual */}
+              {ord.isRescheduled && (
+                <div className="p-2.5 rounded-neo-sm bg-purple-100 border-2 border-purple-800 text-purple-950 text-xs font-semibold flex items-start gap-2 shadow-neo-sm">
+                  <span className="text-base leading-none mt-0.5">⚡</span>
+                  <div>
+                    <span className="font-heading font-bold text-purple-900 block">
+                      Jadwal Pengambilan Diperbarui Penjual:
+                    </span>
+                    <p className="text-[11px] text-purple-900/90 mt-0.5">
+                      Diubah menjadi <strong>{formatTanggalIndo(ord.tanggalPengambilan, ord.hariPengambilan)}</strong>.
+                      {ord.rescheduleNotes && ` (${ord.rescheduleNotes})`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Items Ordered List */}
               <div className="space-y-1.5 py-1">
                 <p className="text-[11px] font-bold text-brand-dark/60 uppercase tracking-wider">

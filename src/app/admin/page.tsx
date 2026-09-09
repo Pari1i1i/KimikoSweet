@@ -8,6 +8,7 @@ import { Order } from "@/types";
 import { OrdersDatagrid } from "@/components/OrdersDatagrid";
 import { ProductionDatagrid } from "@/components/ProductionDatagrid";
 import { IncomeDashboard } from "@/components/IncomeDashboard";
+import { StoreSettingsControl } from "@/components/StoreSettingsControl";
 import { MascotChoux } from "@/components/MascotChoux";
 import { Footer } from "@/components/Footer";
 import { 
@@ -17,7 +18,8 @@ import {
   ShoppingBag, 
   LogOut, 
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  Store
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,7 +33,7 @@ function AdminPageContent() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Admin Active Tab
-  const [activeAdminTab, setActiveAdminTab] = useState<"orders" | "production" | "income">("orders");
+  const [activeAdminTab, setActiveAdminTab] = useState<"orders" | "production" | "income" | "settings">("orders");
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
@@ -241,6 +243,18 @@ function AdminPageContent() {
             <Wallet className="w-4 h-4" />
             <span>3. Manajemen Pendapatan & Sesi</span>
           </button>
+
+          <button
+            onClick={() => setActiveAdminTab("settings")}
+            className={`px-4 py-2 rounded-neo-sm font-heading font-bold text-xs sm:text-sm border-2 border-brand-dark flex items-center gap-2 transition-all shrink-0 ${
+              activeAdminTab === "settings"
+                ? "bg-green-400 text-brand-dark shadow-neo-sm font-extrabold"
+                : "bg-brand-bg hover:bg-green-100"
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            <span>4. Buka/Tutup Toko & Jadwal PO</span>
+          </button>
         </div>
       </div>
 
@@ -249,6 +263,7 @@ function AdminPageContent() {
         {activeAdminTab === "orders" && <OrdersDatagrid orders={orders} />}
         {activeAdminTab === "production" && <ProductionDatagrid orders={orders} />}
         {activeAdminTab === "income" && <IncomeDashboard orders={orders} />}
+        {activeAdminTab === "settings" && <StoreSettingsControl />}
       </main>
 
       <Footer />

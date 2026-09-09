@@ -21,6 +21,10 @@ service cloud.firestore {
     match /incomeSessions/{document=**} {
       allow read, write: if true;
     }
+
+    match /storeSettings/{document=**} {
+      allow read, write: if true;
+    }
     
     // Reviews: siapapun bisa baca & tulis komentar
     match /reviews/{document=**} {

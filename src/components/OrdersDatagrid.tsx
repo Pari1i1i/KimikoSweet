@@ -2,14 +2,16 @@
 
 import React, { useState } from "react";
 import { dataService } from "@/lib/dataService";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus, HariPengambilan } from "@/types";
 import { MascotChoux } from "./MascotChoux";
 import { 
   CheckCheck, 
   Search, 
   QrCode, 
-  Banknote,
-  MessageSquare
+  Banknote, 
+  MessageSquare, 
+  Calendar, 
+  X 
 } from "lucide-react";
 
 interface OrdersDatagridProps {
@@ -21,6 +23,12 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // State untuk Reschedule Modal
+  const [rescheduleOrderModal, setRescheduleOrderModal] = useState<Order | null>(null);
+  const [newRescheduleDate, setNewRescheduleDate] = useState("");
+  const [rescheduleNoteInput, setRescheduleNoteInput] = useState("");
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -53,6 +61,51 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
       return `${dayName}, ${formatted}`;
     } catch {
       return tanggalStr;
+    }
+  };
+
+  const getDayName = (dateStr: string): HariPengambilan | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return null;
+    const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const day = dt.getDay();
+    if (day === 1) return "Senin";
+    if (day === 4) return "Kamis";
+    return null;
+  };
+
+  const handleOpenReschedule = (ord: Order) => {
+    setRescheduleOrderModal(ord);
+    setNewRescheduleDate(ord.tanggalPengambilan || "");
+    setRescheduleNoteInput(ord.rescheduleNotes || "");
+  };
+
+  const handleSubmitReschedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rescheduleOrderModal || !newRescheduleDate) return;
+
+    const day = getDayName(newRescheduleDate);
+    if (!day) {
+      alert("⚠️ Tanggal pengambilan baru harus jatuh pada hari SENIN atau KAMIS!");
+      return;
+    }
+
+    setIsRescheduling(true);
+    try {
+      await dataService.rescheduleOrder(
+        rescheduleOrderModal.id,
+        newRescheduleDate,
+        rescheduleNoteInput.trim() || "Jadwal pengambilan diperbarui oleh admin"
+      );
+      setRescheduleOrderModal(null);
+      setNewRescheduleDate("");
+      setRescheduleNoteInput("");
+    } catch (err) {
+      console.error("Reschedule error:", err);
+      alert("Gagal mereschedule pesanan. Silakan coba lagi.");
+    } finally {
+      setIsRescheduling(false);
     }
   };
 
@@ -225,15 +278,32 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
 
                     {/* Jadwal Pengambilan */}
                     <td className="p-3 border-r-2 border-brand-dark/10">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-neo-sm text-xs font-extrabold border border-brand-dark shadow-[1px_1px_0px_#1A1A1A] ${
-                          ord.hariPengambilan === "Kamis" || (ord.tanggalPengambilan && new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 4)
-                            ? "bg-brand-butter text-brand-dark"
-                            : "bg-brand-pink text-brand-dark"
-                        }`}
-                      >
-                        📅 {formatTanggalPengambilan(ord.tanggalPengambilan, ord.hariPengambilan)}
-                      </span>
+                      <div className="space-y-1.5">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-neo-sm text-xs font-extrabold border border-brand-dark shadow-[1px_1px_0px_#1A1A1A] ${
+                            ord.hariPengambilan === "Kamis" || (ord.tanggalPengambilan && new Date(ord.tanggalPengambilan + "T00:00:00").getDay() === 4)
+                              ? "bg-brand-butter text-brand-dark"
+                              : "bg-brand-pink text-brand-dark"
+                          }`}
+                        >
+                          📅 {formatTanggalPengambilan(ord.tanggalPengambilan, ord.hariPengambilan)}
+                        </span>
+
+                        {ord.isRescheduled && (
+                          <span className="block text-[9px] bg-purple-200 border border-purple-800 text-purple-950 px-1.5 py-0.2 rounded font-extrabold w-fit">
+                            ⚡ Rescheduled
+                          </span>
+                        )}
+
+                        <button
+                          onClick={() => handleOpenReschedule(ord)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-brand-dark text-[10px] font-bold text-brand-dark hover:bg-brand-butter neo-btn-sm transition-all"
+                          title="Paksa Ganti / Reschedule Tanggal Pengambilan"
+                        >
+                          <Calendar className="w-3 h-3 text-brand-accent" />
+                          <span>Ubah Tgl</span>
+                        </button>
+                      </div>
                     </td>
 
                     {/* Customer & Contact */}
@@ -374,6 +444,98 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RESCHEDULE TANGGAL OLEH ADMIN */}
+      {rescheduleOrderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/65 backdrop-blur-sm animate-fade-in">
+          <div className="bg-brand-bg w-full max-w-md rounded-neo-lg border-neo-thick border-brand-dark shadow-neo-xl overflow-hidden animate-scale-up">
+            <div className="p-4 bg-brand-pink border-b-neo border-brand-dark flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-brand-butter border-2 border-brand-dark flex items-center justify-center shadow-neo-sm">
+                  <Calendar className="w-4 h-4 text-brand-dark" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-extrabold text-base text-brand-dark">
+                    Reschedule Jadwal Pesanan
+                  </h3>
+                  <p className="text-[10px] font-semibold text-brand-dark/70">
+                    ID: {rescheduleOrderModal.id} • {rescheduleOrderModal.namaPembeli}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRescheduleOrderModal(null)}
+                className="w-7 h-7 rounded-neo-sm bg-white border-2 border-brand-dark flex items-center justify-center hover:bg-brand-butter neo-btn-sm"
+              >
+                <X className="w-4 h-4 text-brand-dark" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitReschedule} className="p-5 space-y-4 bg-white">
+              <div className="p-3 bg-brand-cream rounded-neo-sm border-2 border-brand-dark text-xs space-y-1">
+                <p className="font-semibold text-brand-dark">
+                  <strong>Pembeli:</strong> {rescheduleOrderModal.namaPembeli} ({rescheduleOrderModal.kelas})
+                </p>
+                <p className="text-brand-dark/80">
+                  <strong>Jadwal Awal:</strong> {formatTanggalPengambilan(rescheduleOrderModal.tanggalPengambilan, rescheduleOrderModal.hariPengambilan)}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1">
+                  Pilih Tanggal Pengambilan Baru (Senin / Kamis) <span className="text-brand-accent">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newRescheduleDate}
+                  onChange={(e) => setNewRescheduleDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-neo-sm neo-input text-xs font-bold bg-brand-bg text-brand-dark cursor-pointer"
+                />
+                {newRescheduleDate && (
+                  <p className="text-[11px] font-bold mt-1">
+                    {getDayName(newRescheduleDate) ? (
+                      <span className="text-green-700">✓ Jadwal baru: Hari {getDayName(newRescheduleDate)}, {formatTanggalPengambilan(newRescheduleDate)}</span>
+                    ) : (
+                      <span className="text-red-600">⚠️ Tanggal harus jatuh pada hari Senin atau Kamis!</span>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-1">
+                  Alasan / Catatan Reschedule (Opsional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={rescheduleNoteInput}
+                  onChange={(e) => setRescheduleNoteInput(e.target.value)}
+                  placeholder="Misal: Dapur tutup mendadak di hari Senin / Bahan ready hari Kamis"
+                  className="w-full px-3 py-2 rounded-neo-sm neo-input text-xs font-medium bg-brand-bg text-brand-dark resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRescheduleOrderModal(null)}
+                  className="w-1/3 py-2.5 rounded-neo-sm bg-brand-bg border-2 border-brand-dark text-xs font-bold neo-btn-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRescheduling || !newRescheduleDate || !getDayName(newRescheduleDate)}
+                  className="w-2/3 py-2.5 rounded-neo-sm bg-brand-accent text-white font-heading font-bold text-xs neo-btn disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {isRescheduling ? "Menyimpan..." : "Simpan Jadwal Baru"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

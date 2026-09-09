@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PRODUCTS_DATA } from "@/data/products";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -11,18 +11,48 @@ import { ReviewsWall } from "@/components/ReviewsWall";
 import { MascotChoux } from "@/components/MascotChoux";
 import { CartProvider, useCart } from "@/lib/CartContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import { dataService, getDefaultUpcomingPickupDates } from "@/lib/dataService";
+import { StoreSettings } from "@/types";
 import { 
   Sparkles, 
   ShoppingBag, 
   ArrowRight, 
   Search, 
-  Star
+  Star,
+  Calendar,
+  Store
 } from "lucide-react";
 
 function HomePageContent() {
   const [activeTab, setActiveTab] = useState<"menu" | "status" | "reviews">("menu");
   const [selectedCategory, setSelectedCategory] = useState<"all" | "classic" | "special">("all");
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    isOpen: true,
+    closedReason: "Dapur KiMiko Sweets sedang tutup sementara / kuota pesanan penuh.",
+    activePickupDates: getDefaultUpcomingPickupDates(),
+  });
   const { totalItems, setIsCartOpen } = useCart();
+
+  useEffect(() => {
+    const unsub = dataService.subscribeStoreSettings((sett) => {
+      setStoreSettings(sett);
+    });
+    return () => unsub();
+  }, []);
+
+  const formatTanggalIndo = (tanggalStr: string) => {
+    try {
+      const dt = new Date(tanggalStr + "T00:00:00");
+      const dayName = dt.getDay() === 4 ? "Kamis" : "Senin";
+      const formatted = dt.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
+      return `${dayName}, ${formatted}`;
+    } catch {
+      return tanggalStr;
+    }
+  };
 
   const filteredProducts = PRODUCTS_DATA.filter((p) => {
     if (selectedCategory === "all") return true;
@@ -39,6 +69,43 @@ function HomePageContent() {
         {/* TAMPILAN TAB 1: MENU UTAMA & HERO */}
         {activeTab === "menu" && (
           <>
+            {/* Banner jika toko tutup */}
+            {!storeSettings.isOpen && (
+              <div className="p-4 sm:p-5 rounded-neo-lg bg-red-100 border-neo-thick border-red-500 shadow-neo flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-neo-sm bg-red-200 border-2 border-red-500 flex items-center justify-center shrink-0">
+                  <Store className="w-5 h-5 text-red-700" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-extrabold text-base sm:text-lg text-red-950">
+                    Dapur KiMiko Sweets Sedang Tutup Sementara 🔒
+                  </h3>
+                  <p className="text-xs sm:text-sm text-red-900/90 font-medium mt-0.5">
+                    {storeSettings.closedReason || "Saat ini pemesanan sedang ditutup oleh penjual. Anda tetap dapat melihat menu dan ulasan."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Jadwal Buka Pengambilan (Active Pickup Schedule Badge) */}
+            {storeSettings.isOpen && storeSettings.activePickupDates && storeSettings.activePickupDates.length > 0 && (
+              <div className="p-3.5 rounded-neo bg-brand-cream border-2 border-brand-dark flex flex-col sm:flex-row items-center justify-between gap-2 shadow-neo-sm">
+                <div className="flex items-center gap-2 text-xs font-bold text-brand-dark text-center sm:text-left">
+                  <Calendar className="w-4 h-4 text-brand-accent shrink-0" />
+                  <span>Jadwal Pengambilan Aktif:</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {storeSettings.activePickupDates.map((dateStr) => (
+                    <span
+                      key={dateStr}
+                      className="px-2.5 py-0.5 rounded-full bg-brand-butter border border-brand-dark text-xs font-extrabold text-brand-dark shadow-[1px_1px_0px_#1A1A1A]"
+                    >
+                      📅 {formatTanggalIndo(dateStr)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Hero Section Neobrutalism */}
             <section className="relative overflow-hidden rounded-neo-lg bg-brand-pink border-neo-thick border-brand-dark p-4 sm:p-8 shadow-neo-lg w-full">
               {/* Decorative Floating Badges */}

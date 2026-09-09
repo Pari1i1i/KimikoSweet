@@ -32,8 +32,17 @@ export interface Order {
   metodeBayar: PaymentMethod;
   notes?: string;
   isAnonim?: boolean;
+  isRescheduled?: boolean;
+  rescheduleNotes?: string;
   status: OrderStatus;
   createdAt: number; // timestamp ms
+}
+
+export interface StoreSettings {
+  isOpen: boolean;
+  closedReason?: string;
+  activePickupDates: string[]; // List of YYYY-MM-DD strings allowed for order pickup
+  updatedAt?: number;
 }
 
 export interface IncomeSession {

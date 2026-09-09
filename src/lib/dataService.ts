@@ -9,19 +9,45 @@ import {
   Unsubscribe 
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
-import { Order, IncomeSession, Review, Product } from "@/types";
+import { Order, IncomeSession, Review, Product, StoreSettings, HariPengambilan } from "@/types";
 import { PRODUCTS_DATA, INITIAL_REVIEWS } from "@/data/products";
 
 const LOCAL_STORAGE_ORDERS_KEY = "kimiko_orders_store";
 const LOCAL_STORAGE_REVIEWS_KEY = "kimiko_reviews_store";
 const LOCAL_STORAGE_SESSION_KEY = "kimiko_session_store";
+const LOCAL_STORAGE_SETTINGS_KEY = "kimiko_store_settings";
 const LOCAL_PRODUCTION_DONE_PCS_KEY = "kimiko_production_done_pcs_map";
+
+export function getDefaultUpcomingPickupDates(): string[] {
+  const dates: string[] = [];
+  const now = new Date();
+  const d = new Date(now);
+  // Scan up to 21 days ahead
+  for (let i = 0; i < 21 && dates.length < 4; i++) {
+    const day = d.getDay();
+    if (day === 1 || day === 4) { // 1 = Senin, 4 = Kamis
+      const iso = d.toISOString().split("T")[0];
+      if (!dates.includes(iso)) {
+        dates.push(iso);
+      }
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return dates;
+}
+
+const DEFAULT_STORE_SETTINGS: StoreSettings = {
+  isOpen: true,
+  closedReason: "Dapur KiMiko Sweets sedang tutup sementara / kuota pesanan penuh.",
+  activePickupDates: getDefaultUpcomingPickupDates(),
+};
 
 type Listener<T> = (data: T) => void;
 const listeners = {
   orders: new Set<Listener<Order[]>>(),
   reviews: new Set<Listener<Review[]>>(),
   sessions: new Set<Listener<IncomeSession | null>>(),
+  settings: new Set<Listener<StoreSettings>>(),
   productionReset: new Set<() => void>(),
 };
 
@@ -41,6 +67,9 @@ if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
       } else if (event.data.type === "SESSION_UPDATED") {
         const fresh = getLocalData<IncomeSession | null>(LOCAL_STORAGE_SESSION_KEY, null);
         listeners.sessions.forEach((l) => l(fresh));
+      } else if (event.data.type === "SETTINGS_UPDATED") {
+        const fresh = getLocalData<StoreSettings>(LOCAL_STORAGE_SETTINGS_KEY, DEFAULT_STORE_SETTINGS);
+        listeners.settings.forEach((l) => l(fresh));
       } else if (event.data.type === "PRODUCTION_RESET") {
         listeners.productionReset.forEach((l) => l());
       }
@@ -50,7 +79,7 @@ if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
   }
 }
 
-function broadcastEvent(type: "ORDERS_UPDATED" | "REVIEWS_UPDATED" | "SESSION_UPDATED" | "PRODUCTION_RESET") {
+function broadcastEvent(type: "ORDERS_UPDATED" | "REVIEWS_UPDATED" | "SESSION_UPDATED" | "SETTINGS_UPDATED" | "PRODUCTION_RESET") {
   try {
     if (channel) {
       channel.postMessage({ type });
@@ -378,6 +407,138 @@ export const dataService = {
     return () => {
       listeners.productionReset.delete(callback);
     };
+  },
+
+  // SUBSCRIBE STORE SETTINGS (Buka/Tutup Toko & Tanggal yang Diizinkan)
+  subscribeStoreSettings(callback: (settings: StoreSettings) => void): Unsubscribe {
+    const localSett = getLocalData<StoreSettings>(LOCAL_STORAGE_SETTINGS_KEY, DEFAULT_STORE_SETTINGS);
+    callback(localSett);
+    listeners.settings.add(callback);
+
+    let firestoreUnsub: Unsubscribe = () => {};
+
+    if (isFirebaseConfigured) {
+      try {
+        const docRef = doc(db, "storeSettings", "general_settings");
+        firestoreUnsub = onSnapshot(
+          docRef,
+          (docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data() as StoreSettings;
+              const merged: StoreSettings = {
+                isOpen: typeof data.isOpen === "boolean" ? data.isOpen : true,
+                closedReason: data.closedReason || DEFAULT_STORE_SETTINGS.closedReason,
+                activePickupDates: Array.isArray(data.activePickupDates) && data.activePickupDates.length > 0 
+                  ? data.activePickupDates 
+                  : DEFAULT_STORE_SETTINGS.activePickupDates,
+                updatedAt: data.updatedAt || Date.now(),
+              };
+              setLocalData(LOCAL_STORAGE_SETTINGS_KEY, merged);
+              callback(merged);
+            } else {
+              // Jika belum ada di firestore, gunakan local
+              callback(localSett);
+            }
+          },
+          (err) => {
+            console.warn("Firestore storeSettings error (fallback to local):", err);
+          }
+        );
+      } catch (e) {
+        console.warn("Firebase subscribeStoreSettings failed (fallback to local):", e);
+      }
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LOCAL_STORAGE_SETTINGS_KEY) {
+        const fresh = getLocalData<StoreSettings>(LOCAL_STORAGE_SETTINGS_KEY, DEFAULT_STORE_SETTINGS);
+        callback(fresh);
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorage);
+    }
+
+    return () => {
+      try {
+        firestoreUnsub();
+      } catch {
+        // ignore
+      }
+      listeners.settings.delete(callback);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorage);
+      }
+    };
+  },
+
+  // UPDATE STORE SETTINGS
+  async updateStoreSettings(settingsUpdate: Partial<StoreSettings>): Promise<void> {
+    const current = getLocalData<StoreSettings>(LOCAL_STORAGE_SETTINGS_KEY, DEFAULT_STORE_SETTINGS);
+    const updated: StoreSettings = {
+      ...current,
+      ...settingsUpdate,
+      updatedAt: Date.now(),
+    };
+
+    setLocalData(LOCAL_STORAGE_SETTINGS_KEY, updated);
+    listeners.settings.forEach((l) => l(updated));
+    broadcastEvent("SETTINGS_UPDATED");
+
+    if (isFirebaseConfigured) {
+      try {
+        const docRef = doc(db, "storeSettings", "general_settings");
+        const payloadToSave = cleanPayload(updated);
+        await setDoc(docRef, payloadToSave);
+      } catch (err) {
+        console.warn("Firestore updateStoreSettings error (saved in local storage):", err);
+      }
+    }
+  },
+
+  // RESCHEDULE ORDER (ADMIN FORCE RESCHEDULE)
+  async rescheduleOrder(orderId: string, newTanggal: string, rescheduleNotes?: string): Promise<void> {
+    const current = getLocalData<Order[]>(LOCAL_STORAGE_ORDERS_KEY, []);
+    
+    // Hitung hari dari tanggal baru
+    let dayName: HariPengambilan = "Senin";
+    try {
+      const dt = new Date(newTanggal + "T00:00:00");
+      if (dt.getDay() === 4) dayName = "Kamis";
+    } catch {
+      // fallback
+    }
+
+    const updated = current.map((ord) => {
+      if (ord.id === orderId) {
+        return {
+          ...ord,
+          tanggalPengambilan: newTanggal,
+          hariPengambilan: dayName,
+          isRescheduled: true,
+          rescheduleNotes: rescheduleNotes || ord.rescheduleNotes || "Jadwal diubah oleh penjual",
+        };
+      }
+      return ord;
+    });
+
+    setLocalData(LOCAL_STORAGE_ORDERS_KEY, updated);
+    listeners.orders.forEach((l) => l(updated));
+    broadcastEvent("ORDERS_UPDATED");
+
+    if (isFirebaseConfigured) {
+      try {
+        const docRef = doc(db, "orders", orderId);
+        await updateDoc(docRef, {
+          tanggalPengambilan: newTanggal,
+          hariPengambilan: dayName,
+          isRescheduled: true,
+          rescheduleNotes: rescheduleNotes || "Jadwal diubah oleh penjual",
+        });
+      } catch (err) {
+        console.warn("Firestore rescheduleOrder failed (updated in local storage):", err);
+      }
+    }
   },
 
   // START NEW SESSION (RESETS ALL ORDERS, PRODUCTION COUNTERS, AND SESSION)
