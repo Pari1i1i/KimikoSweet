@@ -514,6 +514,18 @@ export const OrdersDatagrid: React.FC<OrdersDatagridProps> = ({ orders }) => {
                           </span>
                         )}
 
+                        {/* 6. Tombol Kembali ke Confirmed (untuk status Completed) */}
+                        {ord.status === "completed" && (
+                          <button
+                            onClick={() => handleUpdateStatus(ord.id, "confirmed")}
+                            disabled={updatingId === ord.id}
+                            className="px-2.5 py-1 rounded-neo-sm bg-brand-butter text-brand-dark font-heading font-bold text-xs neo-btn-sm hover:bg-brand-butter/80"
+                            title="Kembali ke Konfirmasi"
+                          >
+                            ↺ Kembali
+                          </button>
+                        )}
+
                         {/* 4. Status Rejected */}
                         {ord.status === "rejected" && (
                           <span className="text-[11px] font-bold text-red-700 flex items-center gap-1">
